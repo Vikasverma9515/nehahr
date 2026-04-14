@@ -1,26 +1,144 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: #09090f;
+  --color-foreground: #f0f0f5;
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
+
+  --color-dark-bg: #09090d;
+  --color-dark-secondary: #0e0e14;
+  --color-dark-card: #111116;
+  --color-dark-card-hover: #16161c;
+  --color-dark-elevated: #1a1a22;
+  --color-dark-border: rgba(255, 255, 255, 0.08);
+  --color-dark-border-light: rgba(255, 255, 255, 0.14);
+
+  --color-dark-text: #f0f0f5;
+  --color-dark-text-secondary: #b0b1c4;
+  --color-dark-text-muted: #787994;
+
+  --color-accent: #8b5cf6;
+  --color-accent-hover: #7c3aed;
+  --color-accent-muted: rgba(139, 92, 246, 0.12);
+  --color-accent-glow: rgba(139, 92, 246, 0.08);
+
+  --color-success: #34d399;
+  --color-success-muted: rgba(52, 211, 153, 0.12);
+  --color-danger: #f87171;
+  --color-danger-muted: rgba(248, 113, 113, 0.12);
+  --color-warning: #fbbf24;
+  --color-warning-muted: rgba(251, 191, 36, 0.12);
+  --color-info: #60a5fa;
+  --color-info-muted: rgba(96, 165, 250, 0.12);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.08) transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #09090d;
+  color: #ededf3;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Display font for large numbers and headings */
+.font-display {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+/* Card glass effect */
+.card-glass {
+  background: rgba(14, 14, 20, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.3), 0 4px 24px rgba(0,0,0,0.3);
+}
+
+.card-glass:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Stat card glow */
+.stat-glow {
+  background: rgba(14, 14, 20, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+}
+
+/* Inner row style */
+.row-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.2s ease;
+}
+.row-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Table styles */
+.dark-table {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+}
+.dark-table thead {
+  background: rgba(255, 255, 255, 0.02);
+}
+.dark-table th {
+  color: #525367;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.dark-table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+.dark-table tbody tr {
+  transition: background 0.15s ease;
+}
+.dark-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Form elements */
+input, select, textarea {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #ededf3 !important;
+  transition: all 0.2s ease !important;
+}
+input::placeholder, textarea::placeholder {
+  color: #525367 !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(139, 92, 246, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1) !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  outline: none !important;
+}
+option {
+  background: #111116;
+  color: #ededf3;
+}
+
+/* Button base */
+.btn-primary {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 2px 12px rgba(139, 92, 246, 0.25);
+  transition: all 0.2s ease;
+}
+.btn-primary:hover {
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
+  transform: translateY(-1px);
 }
