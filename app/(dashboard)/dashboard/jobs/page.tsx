@@ -99,6 +99,7 @@ export default async function JobsPage() {
       ) : (
         <EmptyState
           icon={Briefcase}
+          art="sitting-4"
           title="No jobs"
           description="Create your first job posting"
           action={

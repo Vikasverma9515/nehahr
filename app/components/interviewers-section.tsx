@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Calendar, Check, Plus, Trash2, X } from "lucide-react";
 import { createInterviewer, deleteInterviewer } from "@/app/actions/interviewers";
 import { useRouter } from "next/navigation";
+import { PersonAvatar } from "@/app/components/person-avatar";
 
 type Interviewer = {
   id: string;
@@ -156,7 +157,8 @@ export function InterviewersSection({ interviewers }: { interviewers: Interviewe
           {interviewers.map((i) => {
             const isConnected = !!i.google_connected_at;
             return (
-              <div key={i.id} className="row-item flex items-center justify-between rounded-xl px-4 py-3">
+              <div key={i.id} className="row-item flex items-center justify-between gap-3 rounded-xl px-4 py-3">
+                <PersonAvatar name={i.name} size={38} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="text-[13px] font-semibold text-dark-text">{i.name}</p>

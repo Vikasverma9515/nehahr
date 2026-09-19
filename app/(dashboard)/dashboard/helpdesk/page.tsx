@@ -2,6 +2,7 @@ import { createClient } from "@/app/lib/supabase/server";
 import { PageHeader } from "@/app/components/ui/page-header";
 import { EmptyState } from "@/app/components/ui/empty-state";
 import { HelpCircle, Clock } from "lucide-react";
+import { PersonAvatar } from "@/app/components/person-avatar";
 
 export default async function HelpdeskPage() {
   const supabase = await createClient();
@@ -64,6 +65,7 @@ export default async function HelpdeskPage() {
       ) : (
         <EmptyState
           icon={HelpCircle}
+          art="sitting-2"
           title="No tickets"
           description="Employee helpdesk tickets will appear here"
         />
@@ -77,7 +79,8 @@ function TicketCard({ ticket: t }: { ticket: any }) {
   return (
     <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+        <PersonAvatar name={t.employee_name} size={38} />
+        <div className="min-w-0 flex-1">
           <p className="text-[14px] font-semibold text-dark-text">
             {t.employee_name || "Unknown"}
           </p>

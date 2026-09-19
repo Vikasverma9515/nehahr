@@ -12,6 +12,8 @@ import { createClient } from "@/app/lib/supabase/server";
 import { Logo } from "@/app/components/logo";
 import { FeatureBento } from "@/app/components/feature-bento";
 import GradientWaves from "@/app/components/GradientWaves";
+import { PeepStack } from "@/app/components/peep";
+import { Illus, type IllusName } from "@/app/components/illus";
 import {
   PhoneMock,
   ProblemBoard,
@@ -62,6 +64,8 @@ const steps = [
     visual: <StepSchedule />,
   },
 ];
+
+const AUDIENCE_ILLUS: IllusName[] = ["bust-46", "bust-10", "bust-102"];
 
 const stages = ["New", "Screening", "Screened", "Shortlisted", "Scheduled", "Interviewing", "Offer", "Joined"];
 
@@ -237,7 +241,10 @@ export default async function HomePage() {
 
       <main className="relative z-10">
         {/* Hero */}
-        <section className="mx-auto max-w-6xl px-6 pb-20 pt-16 text-center md:pt-24">
+        <section className="relative mx-auto max-w-6xl px-6 pb-20 pt-16 text-center md:pt-24">
+          <div className="mb-5 flex justify-center">
+            <PeepStack names={["priya", "rahul", "zoe", "amit", "maya", "asha"]} size={44} ring="ring-dark-bg" />
+          </div>
           <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-dark-border bg-white/[0.03] px-3.5 py-1.5 text-[12px] font-medium text-dark-text-secondary">
             <Sparkles className="h-3.5 w-3.5 text-accent" />
             The AI recruiter that picks up the phone
@@ -275,7 +282,12 @@ export default async function HomePage() {
             ))}
           </ul>
 
-          <div className="relative mt-16">
+          <div className="relative mt-16 lg:mt-32">
+            {/* Two people standing on the dashboard: the team you are hiring for */}
+            <div className="pointer-events-none absolute bottom-full left-6 z-10 hidden items-end gap-1 lg:flex" aria-hidden="true">
+              <Illus name="standing-9" height={170} glow={false} />
+              <Illus name="standing-12" height={158} glow={false} flip />
+            </div>
             <ProductPreview />
             <div className="pointer-events-none absolute -bottom-10 -right-8 hidden rotate-[4deg] xl:block">
               <PhoneMock />
@@ -285,12 +297,14 @@ export default async function HomePage() {
 
         {/* Problem → solution */}
         <section className="mx-auto max-w-6xl px-6 py-20">
+          <div className="relative">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-accent">The problem</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Hiring shouldn&apos;t run on phone tag</h2>
             <p className="mt-4 text-[15px] leading-relaxed text-dark-text-secondary">
               Missed calls, endless email threads and half-filled spreadsheets slow down every hire. Here is what changes when Neha takes over the legwork.
             </p>
+          </div>
           </div>
           <div className="mt-12 grid items-stretch gap-6 lg:grid-cols-[1fr_auto_1fr]">
             <ProblemBoard />
@@ -322,12 +336,14 @@ export default async function HomePage() {
 
         {/* Features */}
         <section id="features" className="mx-auto max-w-6xl scroll-mt-20 px-6 py-24">
+          <div className="relative">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-accent">Features</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Everything between &ldquo;applied&rdquo; and &ldquo;joined&rdquo;</h2>
             <p className="mt-4 text-[15px] leading-relaxed text-dark-text-secondary">
               Replace the scattered calls, spreadsheets and follow-up emails with one system that does the legwork.
             </p>
+          </div>
           </div>
           <div className="mt-14">
             <FeatureBento />
@@ -337,9 +353,11 @@ export default async function HomePage() {
         {/* How it works */}
         <section id="how-it-works" className="scroll-mt-20 border-y border-dark-border bg-dark-secondary/60">
           <div className="mx-auto max-w-6xl px-6 py-24">
-            <div className="mx-auto max-w-2xl text-center">
-              <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-accent">How it works</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">From job post to offer in four steps</h2>
+            <div className="relative">
+              <div className="mx-auto max-w-2xl text-center">
+                <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-accent">How it works</p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">From job post to offer in four steps</h2>
+              </div>
             </div>
             <div className="mt-14 grid gap-6 md:grid-cols-4">
               {steps.map((s) => (
@@ -373,11 +391,18 @@ export default async function HomePage() {
                 title: "In-house HR teams",
                 body: "Free your team from repetitive calls and scheduling so they can spend time on the conversations that matter.",
               },
-            ].map(({ icon: Icon, title, body }) => (
-              <div key={title} className="rounded-2xl border border-dark-border bg-gradient-to-b from-white/[0.03] to-transparent p-6">
-                <Icon className="mb-4 h-6 w-6 text-accent" />
-                <h3 className="text-[16px] font-semibold text-dark-text">{title}</h3>
-                <p className="mt-2 text-[13.5px] leading-relaxed text-dark-text-muted">{body}</p>
+            ].map(({ icon: Icon, title, body }, i) => (
+              <div key={title} className="overflow-hidden rounded-2xl border border-dark-border bg-gradient-to-b from-white/[0.03] to-transparent">
+                <div className="relative flex h-[160px] items-end justify-center bg-gradient-to-b from-accent/[0.16] to-transparent">
+                  <Illus name={AUDIENCE_ILLUS[i]} height={148} glow={false} />
+                </div>
+                <div className="p-6 pt-5">
+                  <div className="flex items-center gap-2.5">
+                    <Icon className="h-5 w-5 text-accent" />
+                    <h3 className="text-[16px] font-semibold text-dark-text">{title}</h3>
+                  </div>
+                  <p className="mt-2.5 text-[13.5px] leading-relaxed text-dark-text-muted">{body}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -385,9 +410,11 @@ export default async function HomePage() {
 
         {/* FAQ */}
         <section id="faq" className="mx-auto max-w-3xl scroll-mt-20 px-6 pb-24">
-          <div className="text-center">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-accent">FAQ</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Questions, answered</h2>
+          <div className="relative">
+            <div className="text-center">
+              <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-accent">FAQ</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Questions, answered</h2>
+            </div>
           </div>
           <div className="mt-10 divide-y divide-dark-border rounded-2xl border border-dark-border bg-dark-card/60">
             {faqs.map(({ q, a }) => (
@@ -406,6 +433,11 @@ export default async function HomePage() {
         <section className="mx-auto max-w-6xl px-6 pb-24">
           <div className="relative overflow-hidden rounded-3xl border border-dark-border-light bg-gradient-to-br from-accent/20 via-dark-card to-dark-card px-8 py-16 text-center">
             <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
+            <Illus name="standing-4" height={260} className="absolute bottom-0 left-8 hidden lg:block" />
+            <Illus name="standing-24" height={250} flip className="absolute bottom-0 right-8 hidden lg:block" />
+            <div className="relative mb-6 flex justify-center">
+              <PeepStack names={["maya", "rahul", "zoe", "amit", "asha", "finn", "sneha"]} size={48} ring="ring-dark-card" />
+            </div>
             <h2 className="relative text-3xl font-bold tracking-tight md:text-4xl">Give your hiring a head start</h2>
             <p className="relative mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-dark-text-secondary">
               Create an account, add your first role, and let Neha make the first call.

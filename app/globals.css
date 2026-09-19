@@ -142,3 +142,13 @@ option {
   box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
   transform: translateY(-1px);
 }
+
+/* Floating people on the landing page */
+@keyframes peep-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+.peep-float { animation: peep-float 6s ease-in-out infinite; will-change: transform; }
+@media (prefers-reduced-motion: reduce) {
+  .peep-float { animation: none; }
+}

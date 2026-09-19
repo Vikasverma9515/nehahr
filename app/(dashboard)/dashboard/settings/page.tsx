@@ -3,6 +3,7 @@ import { Card } from "@/app/components/ui/card";
 import { InterviewersSection } from "@/app/components/interviewers-section";
 import { HrSenderSection } from "@/app/components/hr-sender-section";
 import { getHrSenderStatus } from "@/app/actions/hr-sender";
+import { PersonAvatar } from "@/app/components/person-avatar";
 import {
   Users,
   Mail,
@@ -75,9 +76,7 @@ export default async function SettingsPage({
                     Account info from your login
                   </p>
                 </div>
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#8b5cf6]/30 to-[#6d28d9]/30 text-[14px] font-bold text-accent">
-                  {userName.charAt(0).toUpperCase()}
-                </div>
+                <PersonAvatar name={userName} size={44} shape="soft" />
               </div>
               <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                 <ProfileField label="Name" value={userName} />

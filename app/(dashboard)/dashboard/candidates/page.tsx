@@ -4,6 +4,7 @@ import { Badge } from "@/app/components/ui/badge";
 import { EmptyState } from "@/app/components/ui/empty-state";
 import { Users, MapPin, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { PersonAvatar } from "@/app/components/person-avatar";
 
 type Candidate = {
   id: string;
@@ -257,6 +258,7 @@ export default async function CandidatesPage({
       ) : (
         <EmptyState
           icon={Users}
+          art="standing-7"
           title={activeTab === "all" ? "No candidates" : `No ${activeTab} candidates`}
           description={
             activeTab === "action"
@@ -305,6 +307,8 @@ function CandidateRow({ candidate: c }: { candidate: Candidate }) {
           <span className="text-[9px] text-dark-text-muted">—</span>
         </div>
       )}
+
+      <PersonAvatar name={c.name} size={36} className="hidden sm:block" />
 
       {/* Info */}
       <div className="min-w-0 flex-1">

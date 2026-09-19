@@ -32,6 +32,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
+import { PersonAvatar } from "@/app/components/person-avatar";
 
 const SCORING_WEIGHTS: Record<string, number> = {
   location_fit: 10,
@@ -142,6 +143,7 @@ export default async function CandidateDetailPage({
               <span className="text-[11px] uppercase tracking-wider text-dark-text-muted">N/A</span>
             </div>
           )}
+          <PersonAvatar name={candidate.name} size={64} shape="soft" />
           <div>
             <h1 className="text-[22px] font-bold text-dark-text">{candidate.name}</h1>
             <p className="mt-0.5 text-[13px] text-dark-text-muted">

@@ -25,6 +25,7 @@ import {
 import { SendEmailButton } from "@/app/components/send-email-button";
 import { CallTriggerButton } from "@/app/components/call-trigger-button";
 import { ShortlistButton, RejectButton } from "@/app/components/stage-actions";
+import { PersonAvatar } from "@/app/components/person-avatar";
 
 const PIPELINE_STAGES = [
   "new", "screening", "screened", "shortlisted", "scheduling",
@@ -189,6 +190,7 @@ export default async function DashboardPage() {
                 return (
                   <div key={iv.id} className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3.5">
                     <div className="flex items-start justify-between gap-3">
+                      <PersonAvatar name={cand?.name} size={40} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <Clock className="h-3.5 w-3.5 text-accent" />
@@ -252,6 +254,7 @@ export default async function DashboardPage() {
                       </svg>
                       <span className="text-[10px] font-bold text-dark-text">{c.score}</span>
                     </div>
+                    <PersonAvatar name={c.name} size={34} className="hidden sm:inline-flex" />
                     <Link href={`/dashboard/candidates/${c.id}`} className="min-w-0 flex-1 hover:underline">
                       <p className="text-[13px] font-semibold text-dark-text">{c.name}</p>
                       <p className="truncate text-[11px] text-dark-text-muted">{job?.title || "—"}</p>
@@ -297,9 +300,9 @@ export default async function DashboardPage() {
                   const job = iv.jobs as { title: string } | null;
                   return (
                     <div key={iv.id} className="flex items-center gap-3 rounded-xl bg-white/[0.02] px-3 py-2.5">
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#7dd4a8]/10">
-                        <Check className="h-3.5 w-3.5 text-[#7dd4a8]" />
-                      </div>
+                      <PersonAvatar name={cand?.name} size={34} badge={
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#7dd4a8] ring-2 ring-dark-card"><Check className="h-2.5 w-2.5 text-dark-bg" strokeWidth={3} /></span>
+                      } />
                       <Link href={`/dashboard/candidates/${cand?.id}`} className="min-w-0 flex-1 hover:underline">
                         <p className="text-[13px] font-semibold text-dark-text">{cand?.name}</p>
                         <p className="truncate text-[11px] text-dark-text-muted">{job?.title} · passed final round</p>
@@ -328,7 +331,9 @@ export default async function DashboardPage() {
                   const timeStr = when.toLocaleDateString(undefined, { month: "short", day: "numeric" });
                   return (
                     <div key={call.id} className="flex items-center gap-3 rounded-xl bg-white/[0.02] px-3 py-2.5">
-                      <PhoneOff className="h-3.5 w-3.5 shrink-0 text-[#e8908a]" />
+                      <PersonAvatar name={cand?.name} size={34} badge={
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#e8908a] ring-2 ring-dark-card"><PhoneOff className="h-2.5 w-2.5 text-dark-bg" strokeWidth={3} /></span>
+                      } />
                       <Link href={`/dashboard/candidates/${cand?.id}`} className="min-w-0 flex-1 hover:underline">
                         <p className="text-[13px] font-semibold text-dark-text">{cand?.name}</p>
                         <p className="truncate text-[11px] text-dark-text-muted">
@@ -383,11 +388,13 @@ export default async function DashboardPage() {
                 return (
                   <Link key={call.id} href={`/dashboard/calls/${call.id}`}
                     className="flex items-start gap-3 rounded-xl px-3 py-2 hover:bg-white/[0.03]">
-                    <Phone className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${
-                      call.status === "completed" ? "text-[#7dd4a8]"
-                      : call.status === "in_progress" ? "text-accent"
-                      : "text-dark-text-muted"
-                    }`} />
+                    <PersonAvatar name={cand?.name} size={30} badge={
+                      <span className={`flex h-3.5 w-3.5 items-center justify-center rounded-full ring-2 ring-dark-card ${
+                        call.status === "completed" ? "bg-[#7dd4a8]"
+                        : call.status === "in_progress" ? "bg-accent"
+                        : "bg-dark-text-muted"
+                      }`}><Phone className="h-2 w-2 text-dark-bg" strokeWidth={3} /></span>
+                    } />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-[12px] font-semibold capitalize text-dark-text">{call.call_type.replace(/_/g, " ")}</span>
@@ -419,7 +426,9 @@ export default async function DashboardPage() {
                 return (
                   <Link key={c.id} href={`/dashboard/candidates/${c.id}`}
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-white/[0.03]">
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-[#d4c27d]" />
+                    <PersonAvatar name={c.name} size={34} badge={
+                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#d4c27d] ring-2 ring-dark-card"><AlertTriangle className="h-2.5 w-2.5 text-dark-bg" strokeWidth={3} /></span>
+                    } />
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] font-semibold text-dark-text">{c.name}</p>
                       <p className="truncate text-[11px] text-dark-text-muted">

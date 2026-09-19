@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { LogoMark } from "@/app/components/logo";
+import { PersonAvatar } from "@/app/components/person-avatar";
 
 // Grouped nav — like Linear/Lever: "Work" section + "Admin" section
 const workItems = [
@@ -140,9 +141,7 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
       <div className="border-t border-white/[0.06] p-3">
         <div className="flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
           {/* Avatar */}
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#8b5cf6]/30 to-[#6d28d9]/30 text-[12px] font-bold text-accent">
-            {userName.charAt(0).toUpperCase()}
-          </div>
+          <PersonAvatar name={userName} size={32} shape="soft" />
           <div className="min-w-0 flex-1">
             <p className="truncate text-[12px] font-semibold text-white">{userName}</p>
             <p className="truncate text-[10px] text-dark-text-muted">

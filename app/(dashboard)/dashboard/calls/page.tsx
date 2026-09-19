@@ -3,6 +3,7 @@ import { PageHeader } from "@/app/components/ui/page-header";
 import { EmptyState } from "@/app/components/ui/empty-state";
 import { Phone, Clock, ChevronRight, Radio } from "lucide-react";
 import Link from "next/link";
+import { PersonAvatar } from "@/app/components/person-avatar";
 
 export default async function CallsPage({
   searchParams,
@@ -125,7 +126,9 @@ export default async function CallsPage({
                       href={`/dashboard/calls/${call.id}`}
                       className="flex items-center gap-4 rounded-xl border border-accent/20 bg-accent/[0.04] px-4 py-3 transition-all hover:bg-accent/[0.06]"
                     >
-                      <Radio className="h-4 w-4 shrink-0 text-accent animate-pulse" />
+                      <PersonAvatar name={cand?.name} size={38} badge={
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent ring-2 ring-dark-bg"><Radio className="h-2.5 w-2.5 animate-pulse text-white" /></span>
+                      } />
                       <div className="min-w-0 flex-1">
                         <p className="text-[13px] font-semibold text-dark-text">
                           {call.call_type.replace(/_/g, " ")} call with {cand?.name || "Unknown"}
@@ -233,6 +236,7 @@ export default async function CallsPage({
           ) : (
             <EmptyState
               icon={Phone}
+              art="standing-14"
               title="No calls"
               description="Calls will appear here once Neha starts calling"
             />
@@ -280,6 +284,8 @@ function CallRow({ call, showDate }: { call: any; showDate?: boolean }) {
       </div>
 
       <div className="h-8 w-px shrink-0 bg-white/[0.06]" />
+
+      <PersonAvatar name={cand?.name} size={34} className="hidden sm:inline-flex" />
 
       {/* Info */}
       <div className="min-w-0 flex-1">

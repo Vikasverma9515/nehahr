@@ -10,6 +10,7 @@ import {
   PhoneOff,
   Sparkles,
 } from "lucide-react";
+import { Peep, peepFor } from "@/app/components/peep";
 
 /* ------------------------------------------------------------------ */
 /* Small building blocks                                               */
@@ -25,6 +26,11 @@ const AVATAR_TONES = [
 ];
 
 export function Avatar({ name, tone = 0, className = "h-8 w-8 text-[11px]" }: { name: string; tone?: number; className?: string }) {
+  const face = peepFor(name);
+  if (face) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={`/peeps/${face}.svg`} alt="" loading="lazy" decoding="async" draggable={false} className={`inline-block shrink-0 rounded-full bg-white/10 object-cover ring-2 ring-dark-card ${className}`} />;
+  }
   const initials = name
     .split(" ")
     .map((p) => p[0])
@@ -116,8 +122,11 @@ export function ProblemBoard() {
             className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-dark-card px-3.5 py-2.5"
             style={{ transform: `rotate(${i % 2 ? 1.2 : -1}deg)` }}
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-danger-muted text-danger">
-              <PhoneMissed className="h-4 w-4" />
+            <span className="relative shrink-0">
+              {peepFor(name) ? <Peep name={peepFor(name)!} size={34} ring="ring-dark-card" /> : null}
+              <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-danger text-white ring-2 ring-dark-card">
+                <PhoneMissed className="h-2.5 w-2.5" />
+              </span>
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[12.5px] font-medium text-dark-text">{name}</p>

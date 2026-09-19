@@ -5,6 +5,7 @@ import { Card } from "@/app/components/ui/card";
 import { JobInterviewerPicker } from "@/app/components/job-interviewer-picker";
 import { MapPin, Users, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { PersonAvatar } from "@/app/components/person-avatar";
 
 const STAGE_ORDER = [
   "new", "screening", "screened", "shortlisted", "scheduling", "scheduled",
@@ -116,7 +117,8 @@ export default async function JobDetailPage({
         </div>
         <div className="flex items-center gap-3">
           {assignedInterviewer && (
-            <span className="text-[12px] text-dark-text-secondary">
+            <span className="inline-flex items-center gap-2 text-[12px] text-dark-text-secondary">
+              <PersonAvatar name={assignedInterviewer.name} size={24} />
               {assignedInterviewer.name}
             </span>
           )}
@@ -206,6 +208,8 @@ export default async function JobDetailPage({
                     <span className="text-[9px] text-dark-text-muted">—</span>
                   </div>
                 )}
+
+                <PersonAvatar name={c.name} size={34} className="hidden sm:inline-flex" />
 
                 {/* Name */}
                 <div className="min-w-0 flex-1">

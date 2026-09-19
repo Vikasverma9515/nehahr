@@ -10,6 +10,7 @@ import {
 } from "@/app/components/interview-actions";
 import { SendEmailButton } from "@/app/components/send-email-button";
 import Link from "next/link";
+import { PersonAvatar } from "@/app/components/person-avatar";
 
 export default async function InterviewsPage({
   searchParams,
@@ -215,6 +216,7 @@ export default async function InterviewsPage({
       ) : (
         <EmptyState
           icon={Calendar}
+          art="sitting-10"
           title={emptyMessages[activeTab]?.title || "No interviews"}
           description={emptyMessages[activeTab]?.desc || ""}
         />
@@ -273,6 +275,8 @@ function InterviewRow({ iv, showTime, showDate }: { iv: any; showTime?: boolean;
 
       {/* Divider line */}
       <div className="h-10 w-px shrink-0 bg-white/[0.08]" />
+
+      <PersonAvatar name={candidate?.name} size={38} className="hidden sm:inline-flex" />
 
       {/* Info */}
       <div className="min-w-0 flex-1">
