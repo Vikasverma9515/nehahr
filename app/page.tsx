@@ -11,6 +11,7 @@ import {
 import { createClient } from "@/app/lib/supabase/server";
 import { Logo } from "@/app/components/logo";
 import { FeatureBento } from "@/app/components/feature-bento";
+import GradientWaves from "@/app/components/GradientWaves";
 import {
   PhoneMock,
   ProblemBoard,
@@ -90,7 +91,6 @@ const faqs = [
 function ProductPreview() {
   return (
     <div className="relative mx-auto w-full max-w-5xl">
-      <div className="absolute -inset-x-6 -top-10 bottom-0 -z-10 rounded-[40px] bg-accent/10 blur-3xl" />
       <div className="card-glass overflow-hidden rounded-2xl">
         {/* window chrome */}
         <div className="flex items-center gap-2 border-b border-dark-border px-4 py-3">
@@ -175,10 +175,36 @@ export default async function HomePage() {
   const loggedIn = Boolean(user);
 
   return (
-    <div className="min-h-screen bg-dark-bg text-dark-text">
-      {/* Background glow */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-[640px] overflow-hidden">
-        <div className="absolute left-1/2 top-[-260px] h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-accent/15 blur-[120px]" />
+    <div className="relative min-h-screen overflow-x-clip bg-dark-bg text-dark-text">
+      {/* Animated wave field behind the hero. It renders at reduced resolution and 30fps, and
+          fades into the page background with plain gradients (cheaper than masks or blurs). */}
+      <div className="pointer-events-none absolute inset-x-0 top-[150px] z-0 h-[1150px] overflow-hidden" aria-hidden="true">
+        <GradientWaves
+          horizonColor="#3b1f8c"
+          waveColor="#8b5cf6"
+          crestColor="#c4b5fd"
+          speed={0.35}
+          amplitude={2.4}
+          waveScale={0.6}
+          waveRatio={0.9}
+          swell={35}
+          turbulence={20}
+          tilt={1.11}
+          zoom={1.0}
+          height={5.5}
+          fogDepth={34}
+          detail="medium"
+          brightness={1.1}
+          opacity={1.0}
+          mouseInteraction={false}
+          parallaxStrength={0.5}
+          grain={true}
+          grainIntensity={0.05}
+          maxDpr={0.75}
+          maxFps={30}
+        />
+        <div className="absolute inset-x-0 top-0 h-[260px] bg-gradient-to-b from-dark-bg to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-[420px] bg-gradient-to-t from-dark-bg to-transparent" />
       </div>
 
       {/* Nav */}
@@ -240,7 +266,7 @@ export default async function HomePage() {
               </Link>
             )}
           </div>
-          <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[12.5px] text-dark-text-muted">
+          <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[12.5px] text-dark-text-secondary">
             {["No app for candidates to install", "Works over normal phone calls", "You stay in control of every decision"].map((t) => (
               <li key={t} className="flex items-center gap-1.5">
                 <CircleCheck className="h-3.5 w-3.5 text-success" />

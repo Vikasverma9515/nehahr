@@ -81,8 +81,10 @@ Candidates move through one pipeline: `New → Screening → Screened → Shortl
 </table>
 
 <details>
-<summary><b>More: FAQ section</b></summary>
+<summary><b>More: full hero and FAQ</b></summary>
 <br />
+<img src="docs/screenshots/01-hero.jpg" alt="The Neha hero with animated violet waves behind the product preview" width="94%" />
+<br /><br />
 <img src="docs/screenshots/05-faq.png" alt="FAQ" width="80%" />
 </details>
 
