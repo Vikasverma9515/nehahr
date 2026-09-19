@@ -96,7 +96,7 @@ flowchart LR
     API -->|"outbound calls"| TW["Twilio Voice"]
     TW <-->|"media stream"| API
     API <-->|"speech to text, text to speech"| DG["Deepgram"]
-    API <-->|"conversation and scoring"| LLM["Claude via AWS Bedrock<br/>+ LangGraph"]
+    API <-->|"conversation and scoring"| LLM["Claude via AWS Bedrock"]
     API <-->|"slots and invites"| GC["Google Calendar + Gmail"]
     TW -->|"rings"| CAND(["Candidate's phone"])
 ```
@@ -110,7 +110,7 @@ sequenceDiagram
     participant API as FastAPI
     participant TW as Twilio
     participant C as Candidate
-    participant AI as Claude + LangGraph
+    participant AI as Claude (Bedrock)
     participant DB as Supabase
     HR->>API: Start screening call
     API->>TW: Place outbound call
@@ -139,7 +139,7 @@ More detail lives in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/C
 | Backend API | FastAPI, Python 3.11+, Uvicorn, WebSockets |
 | Telephony | Twilio Voice |
 | Speech | Deepgram (speech-to-text and streaming text-to-speech) |
-| AI | Claude (Haiku and Sonnet) through AWS Bedrock, orchestrated with LangGraph |
+| AI | Claude (Haiku and Sonnet) through AWS Bedrock |
 | Scheduling and email | Google Calendar API and Gmail |
 
 ## 🚀 Getting started
@@ -177,7 +177,9 @@ The dashboard and the backend both read the single `.env` at the repo root.
 | `DEEPGRAM_API_KEY` | Backend | Speech recognition and synthesis |
 | `AWS_BEARER_TOKEN_BEDROCK` | Backend | Claude via Bedrock |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Backend | Calendar and Gmail OAuth |
-| `BACKEND_URL`, `FRONTEND_URL` | Backend | Public URLs used in webhooks and links |
+| `BACKEND_URL`, `FRONTEND_URL` | Backend | Public URLs used in Twilio webhooks, OAuth redirects and CORS |
+| `BACKEND_API_URL` | Dashboard (server) | Where the dashboard's server actions reach the backend. Defaults to `http://localhost:8000`. |
+| `NEXT_PUBLIC_BACKEND_URL` | Dashboard (browser) | Where the browser reaches the backend (OAuth links, call audio, feedback form). Defaults to `http://localhost:8000`. |
 | `HR_COMPANY_NAME`, `HR_SENDER_NAME`, `HR_REPLY_TO` | Backend | Branding used in candidate emails. Defaults to a neutral "Our Company". |
 
 ### 4. Run it
@@ -200,9 +202,27 @@ Open the dashboard, create an account, add a job and a candidate, and you are ru
 
 ## ☁️ Deployment
 
-- **Dashboard:** deploy to [Vercel](https://vercel.com). Import this repo, add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` under Project Settings, then deploy. Every push to `main` redeploys.
-- **Backend:** needs a long-running host with WebSocket support, such as Railway, Render or Fly.io, because live calls stream audio over WebSockets. Serverless functions are not a fit.
-- See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for the full checklist.
+Neha ships as two services: the **dashboard** on Vercel and the **backend** on any Docker host. The dashboard works on its own (auth, candidates, jobs, analytics). The backend adds calling, scheduling and Google integration.
+
+### Dashboard on Vercel
+
+1. Import this repo in [Vercel](https://vercel.com/new). Every push to `main` then redeploys.
+2. Under **Settings → Environment Variables**, add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+3. In Supabase, open **Authentication → URL Configuration** and set the Site URL to your Vercel URL.
+4. Redeploy once so the public variables are baked into the build.
+
+### Backend on Render (or Railway, Fly.io)
+
+The repo includes a [`Dockerfile`](backend/Dockerfile) and a [`render.yaml`](render.yaml) blueprint.
+
+1. In Render, choose **New → Blueprint** and select this repo. Render reads `render.yaml` and asks for each secret.
+2. Set `BACKEND_URL` to the service's public URL and `FRONTEND_URL` to your dashboard URL.
+3. Back on Vercel, add `BACKEND_API_URL` and `NEXT_PUBLIC_BACKEND_URL`, both set to the backend URL, and redeploy.
+4. Nothing to configure in the Twilio console. The backend passes its own webhook URLs (`/api/webhooks/twilio/voice`, `/status` and `/recording`) with every outbound call, so `BACKEND_URL` just needs to be a public HTTPS address (see [`docs/CALL_FLOWS.md`](docs/CALL_FLOWS.md)).
+
+Use an always-on instance for the backend. Live calls stream audio over WebSockets and a background scheduler sends reminders, so serverless functions and sleeping free tiers are not a fit. CORS already allows `*.vercel.app` and your `FRONTEND_URL`.
+
+The full checklist is in [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## 🗂️ Project structure
 
@@ -220,7 +240,7 @@ nehahr/
 │   └── app/
 │       ├── routers/        # candidates, calls, jobs, interviews, webhooks, auth
 │       ├── services/       # call handling, scoring, calendar, speech
-│       ├── agent/          # LangGraph conversation graph and prompts
+│       ├── agent/          # Conversation prompts and nodes
 │       └── workers/        # scheduled reminders and follow-ups
 ├── supabase/               # SQL migrations and seed data
 ├── docs/                   # Architecture, call flows, deployment, screenshots

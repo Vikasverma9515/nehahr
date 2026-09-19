@@ -1,0 +1,43 @@
+# Render Blueprint for the Neha backend.
+# Render dashboard -> New -> Blueprint -> pick this repo.
+# Secrets are marked `sync: false`, so Render asks you for them and they never live in git.
+services:
+  - type: web
+    name: neha-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    # Live calls stream audio over WebSockets and a scheduler runs in the
+    # background, so use an always-on plan (free instances spin down).
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: DEEPGRAM_API_KEY
+        sync: false
+      - key: AWS_BEARER_TOKEN_BEDROCK
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      # Your public backend URL, e.g. https://neha-backend.onrender.com
+      - key: BACKEND_URL
+        sync: false
+      # Your dashboard URL, e.g. https://nehahr.vercel.app
+      - key: FRONTEND_URL
+        value: https://nehahr.vercel.app
+      - key: HR_COMPANY_NAME
+        value: Our Company
+      - key: HR_SENDER_NAME
+        value: Recruiting Team

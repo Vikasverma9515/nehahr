@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 // only needed for Twilio webhooks — not for internal server-to-backend calls.
 // Corporate firewalls (FortiGuard) block ngrok as "Proxy Avoidance", so going
 // through localhost avoids the firewall entirely.
-const BACKEND_URL = "http://localhost:8000";
+const BACKEND_URL = process.env.BACKEND_API_URL || "http://localhost:8000";
 
 export async function previewSlots(candidateId: string, interviewerId?: string) {
   const params = new URLSearchParams({ candidate_id: candidateId });

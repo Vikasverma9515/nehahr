@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/app/lib/supabase/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.BACKEND_API_URL || process.env.BACKEND_URL || "http://localhost:8000";
 
 export async function listInterviewers() {
   const supabase = await createClient();

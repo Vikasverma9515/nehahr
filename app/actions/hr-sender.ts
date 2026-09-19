@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 // Server-to-backend calls go through loopback to avoid the corporate
 // firewall blocking ngrok. Matches the pattern in schedule.ts and calls.ts.
-const BACKEND_URL = "http://localhost:8000";
+const BACKEND_URL = process.env.BACKEND_API_URL || "http://localhost:8000";
 
 // Public backend URL (ngrok) is still needed for the Google OAuth redirect,
 // because the user's browser follows the link out to Google and back.
