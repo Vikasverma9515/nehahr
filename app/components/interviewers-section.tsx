@@ -93,7 +93,7 @@ export function InterviewersSection({ interviewers }: { interviewers: Interviewe
                 name="email"
                 type="email"
                 required
-                placeholder="anil@salescode.ai"
+                placeholder="anil@example.com"
                 className="mt-1.5 block w-full rounded-lg px-3 py-2 text-[13px]"
               />
             </div>

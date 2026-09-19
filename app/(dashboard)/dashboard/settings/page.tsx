@@ -72,7 +72,7 @@ export default async function SettingsPage({
                 <div>
                   <h2 className="text-[14px] font-bold text-dark-text">Your Profile</h2>
                   <p className="mt-0.5 text-[11px] text-dark-text-muted">
-                    Account info from your SalesCode login
+                    Account info from your login
                   </p>
                 </div>
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#8b5cf6]/30 to-[#6d28d9]/30 text-[14px] font-bold text-accent">

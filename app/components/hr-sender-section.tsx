@@ -74,10 +74,10 @@ export function HrSenderSection({ status }: { status: HrSenderStatus }) {
       ) : (
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
           <p className="text-[12px] leading-relaxed text-dark-text-muted">
-            No HR sender account connected yet. Until you connect one, booking emails will fall back to being sent from the interviewer&apos;s own Gmail account (with <code className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[11px]">SalesCode Recruiting Team</code> as the display name).
+            No HR sender account connected yet. Until you connect one, booking emails will fall back to being sent from the interviewer&apos;s own Gmail account (with <code className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[11px]">Recruiting Team</code> as the display name).
           </p>
           <p className="mt-2 text-[12px] leading-relaxed text-dark-text-muted">
-            For a truly professional flow, connect a dedicated recruiting account (e.g. <code className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[11px]">recruiting@salescode.ai</code>). Candidates will then see that address as the real sender.
+            For a truly professional flow, connect a dedicated recruiting account (e.g. <code className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[11px]">recruiting@example.com</code>). Candidates will then see that address as the real sender.
           </p>
           <button
             onClick={handleConnect}

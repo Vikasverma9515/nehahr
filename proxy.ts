@@ -3,9 +3,26 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function proxy(request: NextRequest) {
+  // Dev-only: DISABLE_AUTH=true skips all login redirects.
+  if (process.env.DISABLE_AUTH === "true") {
+    const pathname = request.nextUrl.pathname;
+    if (pathname.startsWith("/login") || pathname.startsWith("/signup")) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    return NextResponse.next();
+  }
+
   const response = NextResponse.next({
     request: { headers: request.headers },
   });
+
+  // Without Supabase credentials (e.g. a fresh deploy) keep public pages
+  // working and send everything else to the login page instead of crashing.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    const p = request.nextUrl.pathname;
+    const isPublic = p === "/" || p.startsWith("/login") || p.startsWith("/signup") || p.startsWith("/feedback");
+    return isPublic ? response : NextResponse.redirect(new URL("/login", request.url));
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,9 +43,18 @@ export async function proxy(request: NextRequest) {
   );
 
   // Refresh session (important for token rotation)
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // If Supabase is slow or unreachable, treat the visitor as signed out so
+  // public pages (landing, login) still load instead of hanging or erroring.
+  let user = null;
+  try {
+    const result = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+    ]);
+    user = result?.data?.user ?? null;
+  } catch {
+    user = null;
+  }
 
   const pathname = request.nextUrl.pathname;
   const isPublicPage =

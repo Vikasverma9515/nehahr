@@ -1,5 +1,5 @@
 -- Neha AI HR Agent - Database Schema
--- Single-company internal tool for SalesCode.ai
+-- Single-company internal tool for the hiring company
 -- Run this in Supabase SQL Editor
 
 -- ============================================

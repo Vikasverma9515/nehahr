@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { login } from "@/app/actions/auth";
-import { Phone } from "lucide-react";
+import { LogoMark } from "@/app/components/logo";
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, null);
@@ -12,9 +12,9 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-purple-700">
-            <Phone className="h-5 w-5 text-white" />
-          </div>
+          <Link href="/" aria-label="Neha home" className="mb-4 inline-block">
+            <LogoMark className="h-14 w-14" />
+          </Link>
           <h1 className="text-[22px] font-bold text-dark-text">Welcome back</h1>
           <p className="mt-1 text-[13px] text-dark-text-muted">Sign in to Neha HR</p>
         </div>
@@ -26,7 +26,7 @@ export default function LoginPage() {
             )}
             <div>
               <label htmlFor="email" className="block text-[12px] font-semibold uppercase tracking-wider text-dark-text-muted">Email</label>
-              <input id="email" name="email" type="email" required autoComplete="email" placeholder="you@salescode.ai"
+              <input id="email" name="email" type="email" required autoComplete="email" placeholder="you@example.com"
                 className="mt-2 block w-full rounded-xl px-4 py-3 text-[13px]" />
             </div>
             <div>

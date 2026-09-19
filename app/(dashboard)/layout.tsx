@@ -1,4 +1,4 @@
-import { createClient } from "@/app/lib/supabase/server";
+import { AUTH_DISABLED, createClient } from "@/app/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/app/components/sidebar";
 
@@ -8,18 +8,21 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { data: { user } } = AUTH_DISABLED
+    ? { data: { user: null } }
+    : await supabase.auth.getUser();
+  if (!user && !AUTH_DISABLED) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, role")
-    .eq("id", user.id)
-    .single();
+  const { data: profile } = user
+    ? await supabase.from("profiles").select("full_name, role").eq("id", user.id).single()
+    : { data: null };
 
   return (
     <div className="flex h-screen bg-dark-bg">
-      <Sidebar userName={profile?.full_name || user.email || "User"} userEmail={user.email || undefined} />
+      <Sidebar
+        userName={profile?.full_name || user?.email || "Dev User"}
+        userEmail={user?.email || undefined}
+      />
       <main className="flex-1 overflow-auto">
         <div className="mx-auto max-w-7xl px-6 py-8">{children}</div>
       </main>

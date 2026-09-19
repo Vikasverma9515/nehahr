@@ -15,6 +15,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
+import { LogoMark } from "@/app/components/logo";
 
 // Grouped nav — like Linear/Lever: "Work" section + "Admin" section
 const workItems = [
@@ -42,12 +43,8 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
   return (
     <aside className="flex w-[240px] flex-col border-r border-white/[0.06] bg-[#0a0a0f]">
       {/* Logo */}
-      <div className="flex h-[64px] items-center gap-2.5 px-5">
-        <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] shadow-lg shadow-[#8b5cf6]/20">
-          <Phone className="h-4 w-4 text-white" strokeWidth={2.5} />
-          {/* Subtle glow */}
-          <div className="absolute inset-0 rounded-xl bg-[#8b5cf6]/20 blur-md -z-10" />
-        </div>
+      <Link href="/" title="Back to home page" className="flex h-[64px] items-center gap-2.5 px-5 transition hover:opacity-80">
+        <LogoMark className="h-9 w-9" />
         <div>
           <div className="flex items-center gap-1.5">
             <span className="text-[16px] font-bold tracking-tight text-white">Neha</span>
@@ -57,7 +54,7 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
           </div>
           <p className="mt-0.5 text-[10px] text-dark-text-muted">AI Recruiting Agent</p>
         </div>
-      </div>
+      </Link>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-2">
@@ -149,7 +146,7 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
           <div className="min-w-0 flex-1">
             <p className="truncate text-[12px] font-semibold text-white">{userName}</p>
             <p className="truncate text-[10px] text-dark-text-muted">
-              {userEmail || "SalesCode.ai"}
+              {userEmail || "Neha HR"}
             </p>
           </div>
           <form action={logout}>
