@@ -152,3 +152,25 @@ option {
 @media (prefers-reduced-motion: reduce) {
   .peep-float { animation: none; }
 }
+
+/* Hero shooting stars: short streaks that fall diagonally and vanish behind the wave field. */
+@keyframes shooting-star {
+  0% { transform: translate3d(0, 0, 0) rotate(var(--star-angle, 125deg)); opacity: 0; }
+  8% { opacity: 1; }
+  70% { opacity: 0.9; }
+  100% { transform: translate3d(var(--star-dx, -260px), var(--star-dy, 300px), 0) rotate(var(--star-angle, 125deg)); opacity: 0; }
+}
+.shooting-star {
+  position: absolute;
+  width: 70px;
+  height: 1.5px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(221, 214, 254, 0), rgba(221, 214, 254, 0.9));
+  filter: drop-shadow(0 0 4px rgba(196, 181, 253, 0.8));
+  opacity: 0;
+  animation: shooting-star var(--star-dur, 3s) cubic-bezier(0.4, 0, 0.9, 1) var(--star-delay, 0s) infinite;
+  will-change: transform, opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shooting-star { animation: none; display: none; }
+}

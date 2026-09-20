@@ -268,6 +268,14 @@ export default async function HomePage() {
 
   return (
     <div className="relative min-h-screen overflow-x-clip bg-dark-bg text-dark-text">
+      {/* Shooting stars: they fall through the sky and disappear behind the wave field below. */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-0 h-[700px] overflow-hidden" aria-hidden="true">
+          <span className="shooting-star" style={{ left: "6%", top: 40, "--star-dx": "-200px", "--star-dy": "240px", "--star-delay": "0s", "--star-dur": "6s", width: 50 } as React.CSSProperties} />
+          <span className="shooting-star" style={{ left: "17%", top: 0, "--star-dx": "-190px", "--star-dy": "230px", "--star-delay": "3.5s", "--star-dur": "7s", width: 45 } as React.CSSProperties} />
+          <span className="shooting-star" style={{ left: "83%", top: 10, "--star-dx": "-200px", "--star-dy": "240px", "--star-delay": "1.8s", "--star-dur": "6.5s", width: 50 } as React.CSSProperties} />
+          <span className="shooting-star" style={{ left: "93%", top: 0, "--star-dx": "-180px", "--star-dy": "220px", "--star-delay": "5s", "--star-dur": "7s", width: 45 } as React.CSSProperties} />
+      </div>
+
       {/* Animated wave field behind the hero. It renders at reduced resolution and 30fps, and
           fades into the page background with plain gradients (cheaper than masks or blurs). */}
       <div className="pointer-events-none absolute inset-x-0 top-[20px] z-0 h-[900px] overflow-hidden" aria-hidden="true">
