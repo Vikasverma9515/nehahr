@@ -12,8 +12,8 @@
     "peeps": "node scripts/generate-peeps.mjs"
   },
   "dependencies": {
-    "@cairnvibe/core": "^0.1.9",
-    "@cairnvibe/sdk": "^0.4.20",
+    "@cairnvibe/core": "^0.1.10",
+    "@cairnvibe/sdk": "^0.4.21",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.0",
     "clsx": "^2.1.1",
@@ -25,7 +25,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@cairnvibe/indexer": "^0.5.2",
+    "@cairnvibe/indexer": "^0.5.3",
     "@dicebear/core": "^9.4.3",
     "@dicebear/open-peeps": "^9.4.2",
     "@tailwindcss/postcss": "^4",
