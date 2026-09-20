@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@cairnvibe/core": "^0.1.9",
-    "@cairnvibe/sdk": "^0.4.17",
+    "@cairnvibe/sdk": "^0.4.18",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.0",
     "clsx": "^2.1.1",
@@ -24,7 +24,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@cairnvibe/indexer": "^0.5.1",
+    "@cairnvibe/indexer": "^0.5.2",
     "@dicebear/core": "^9.4.3",
     "@dicebear/open-peeps": "^9.4.2",
     "@tailwindcss/postcss": "^4",
