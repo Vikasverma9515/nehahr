@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@cairnvibe/core": "^0.1.9",
-    "@cairnvibe/sdk": "^0.4.19",
+    "@cairnvibe/sdk": "^0.4.20",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.0",
     "clsx": "^2.1.1",

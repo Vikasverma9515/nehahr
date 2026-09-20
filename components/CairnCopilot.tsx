@@ -19,6 +19,8 @@ export function CairnCopilot() {
       transcribeEndpoint="/api/copilot/transcribe"
       speakEndpoint="/api/copilot/speak"
       realtimeUrl={realtimeUrl}
+      theme="auto"
+      accent="#8b5cf6"
       persona="Neha Assistant"
     />
   );
