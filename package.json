@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "cairn:build": "cairn build . --provider groq && node scripts/trim-cairn-manifest.mjs",
+    "cairn:build": "cairn build . --provider gemini && node scripts/trim-cairn-manifest.mjs",
     "peeps": "node scripts/generate-peeps.mjs"
   },
   "dependencies": {
@@ -20,7 +20,8 @@
     "next": "16.2.3",
     "ogl": "^1.0.11",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@cairnvibe/indexer": "^0.5.1",

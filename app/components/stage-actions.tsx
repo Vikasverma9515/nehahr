@@ -26,6 +26,8 @@ export function ShortlistButton({ candidateId }: { candidateId: string }) {
 
   return (
     <button
+      data-ai="shortlist-candidate"
+      title="Move this candidate to the shortlist"
       onClick={handleClick}
       disabled={pending}
       className="btn-primary inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50"
@@ -52,6 +54,7 @@ export function RejectButton({ candidateId }: { candidateId: string }) {
       <div className="flex items-center gap-2">
         <span className="text-[12px] text-dark-text-secondary">Reject this candidate?</span>
         <button
+          data-ai="confirm-reject-candidate"
           onClick={handleClick}
           disabled={pending}
           className="rounded-lg bg-white/[0.05] px-3 py-1.5 text-[12px] font-semibold text-dark-text-secondary hover:bg-white/[0.08] disabled:opacity-50"
@@ -70,6 +73,8 @@ export function RejectButton({ candidateId }: { candidateId: string }) {
 
   return (
     <button
+      data-ai="reject-candidate"
+      title="Reject this candidate (asks to confirm first)"
       onClick={() => setConfirming(true)}
       className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-2.5 text-[13px] font-semibold text-dark-text-secondary hover:bg-white/[0.08]"
     >
@@ -101,6 +106,7 @@ export function OverrideShortlistButton({ candidateId }: { candidateId: string }
 
   return (
     <button
+      data-ai="shortlist-anyway-override"
       onClick={handleClick}
       disabled={pending}
       className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-2.5 text-[13px] font-semibold text-dark-text-secondary hover:bg-white/[0.08] disabled:opacity-50"

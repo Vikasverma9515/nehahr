@@ -1,0 +1,11 @@
+import { NextResponse } from "next/server";
+import { createPlanHandlerWithLLM } from "@cairnvibe/sdk/server";
+import { guard, manifest, planLLM, registeredActions, skills, SKILLS_SCOPE_ID } from "@/app/lib/cairn";
+
+export async function POST(request: Request) {
+  const denied = await guard();
+  if (denied) return denied;
+  const handler = createPlanHandlerWithLLM(manifest, planLLM!, { registeredActions, skills, skillsScopeId: SKILLS_SCOPE_ID });
+  const result = await handler(await request.json().catch(() => null));
+  return NextResponse.json(result.body, { status: result.status });
+}

@@ -26,6 +26,7 @@ export function MarkCompleteButton({ interviewId }: { interviewId: string }) {
 
   return (
     <button
+      data-ai="mark-interview-complete"
       onClick={handleClick}
       disabled={pending}
       className="inline-flex items-center gap-1.5 rounded-lg bg-[#7dd4a8]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[#7dd4a8] hover:bg-[#7dd4a8]/20 disabled:opacity-50"
@@ -71,6 +72,7 @@ export function FeedbackButton({ interviewId }: { interviewId: string }) {
   if (!open) {
     return (
       <button
+        data-ai="submit-interview-feedback"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1.5 rounded-lg bg-[#b4a0e8]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[#b4a0e8] hover:bg-[#b4a0e8]/20"
       >
@@ -200,6 +202,8 @@ export function ReminderCallButton({ candidateId }: { candidateId: string }) {
 
   return (
     <button
+      data-ai="send-reminder-call"
+      title="Have Neha call the candidate to remind them of the interview"
       onClick={handleClick}
       disabled={pending}
       className="inline-flex items-center gap-1.5 rounded-lg bg-[#d4c27d]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[#d4c27d] hover:bg-[#d4c27d]/20 disabled:opacity-50"
@@ -265,6 +269,7 @@ export function CancelMeetingButton({ interviewId }: { interviewId: string }) {
   if (!open) {
     return (
       <button
+        data-ai="cancel-interview-meeting"
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1.5 rounded-lg bg-[#e89090]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[#e89090] hover:bg-[#e89090]/20"
       >

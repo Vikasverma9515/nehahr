@@ -27,6 +27,8 @@ export function CallTriggerButton({
   return (
     <div className="flex items-center gap-3">
       <button
+        data-ai="start-ai-call"
+        title="Have Neha phone the candidate now"
         onClick={handleClick}
         disabled={loading}
         className="btn-primary inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50"

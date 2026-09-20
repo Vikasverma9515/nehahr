@@ -72,6 +72,7 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
                 <Link
                   key={item.href}
                   href={item.href}
+                  data-ai={`nav-${item.href.split("/").pop()}`}
                   className={clsx(
                     "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-all",
                     active
@@ -111,6 +112,7 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
                 <Link
                   key={item.href}
                   href={item.href}
+                  data-ai={`nav-${item.href.split("/").pop()}`}
                   className={clsx(
                     "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-all",
                     active
@@ -151,6 +153,7 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
           <form action={logout}>
             <button
               type="submit"
+              data-ai="sign-out"
               title="Sign out"
               className="flex h-7 w-7 items-center justify-center rounded-lg text-dark-text-muted transition-all hover:bg-white/[0.05] hover:text-dark-text-secondary"
             >

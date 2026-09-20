@@ -104,6 +104,8 @@ export function SendEmailButton({
   if (!open) {
     return (
       <button
+        data-ai="send-result-email"
+        title="Preview and send the offer or rejection email to the candidate"
         onClick={handleOpen}
         className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold ${buttonColor}`}
       >
@@ -203,6 +205,7 @@ export function SendEmailButton({
                       Cancel
                     </button>
                     <button
+                      data-ai="confirm-send-email"
                       onClick={handleSend}
                       disabled={sending || !toEmail || !subject || !body}
                       className="rounded-lg bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] px-5 py-2 text-[12px] font-semibold text-white shadow-lg shadow-[#8b5cf6]/20 disabled:opacity-50"
