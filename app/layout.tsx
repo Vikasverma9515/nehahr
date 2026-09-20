@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit, Sora } from "next/font/google";
 import "./globals.css";
-import { CairnCopilot } from "../components/CairnCopilot";
 
 const outfit = Outfit({
   variable: "--font-sans",
@@ -29,7 +28,6 @@ export default function RootLayout({
     <html lang="en" className={`${outfit.variable} ${sora.variable} h-full`}>
       <body className="min-h-full flex flex-col bg-[#09090f] text-[#ededf3]">
         {children}
-      <CairnCopilot />
       </body>
     </html>
   );

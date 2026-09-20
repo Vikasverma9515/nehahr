@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-    transpilePackages: ["@cairnvibe/sdk","@cairnvibe/core"]
+  transpilePackages: ["@cairnvibe/sdk", "@cairnvibe/core"],
+  // Native / socket modules used by the Cairn server entry must not be bundled.
+  serverExternalPackages: ["better-sqlite3", "ws"],
 };
 
 export default nextConfig;

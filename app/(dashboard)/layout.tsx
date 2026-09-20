@@ -1,6 +1,7 @@
 import { AUTH_DISABLED, createClient } from "@/app/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/app/components/sidebar";
+import { CairnCopilot } from "@/components/CairnCopilot";
 
 export default async function DashboardLayout({
   children,
@@ -26,6 +27,8 @@ export default async function DashboardLayout({
       <main className="flex-1 overflow-auto">
         <div className="mx-auto max-w-7xl px-6 py-8">{children}</div>
       </main>
+      {/* The Cairn assistant lives inside the app only: this layout redirects to /login first. */}
+      <CairnCopilot />
     </div>
   );
 }
