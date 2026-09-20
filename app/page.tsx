@@ -1,10 +1,17 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  BarChart3,
+  Briefcase,
+  Calendar,
   CircleCheck,
-  Headphones,
+  LayoutDashboard,
   Mail,
+  Phone,
+  Plus,
+  Search,
   Sparkles,
+  TrendingUp,
   UserCheck,
   Users,
 } from "lucide-react";
@@ -12,7 +19,7 @@ import { createClient } from "@/app/lib/supabase/server";
 import { Logo } from "@/app/components/logo";
 import { FeatureBento } from "@/app/components/feature-bento";
 import GradientWaves from "@/app/components/GradientWaves";
-import { PeepStack } from "@/app/components/peep";
+import { Peep, PeepStack } from "@/app/components/peep";
 import { Illus, type IllusName } from "@/app/components/illus";
 import {
   PhoneMock,
@@ -93,80 +100,161 @@ const faqs = [
 ];
 
 function ProductPreview() {
+  const nav = [
+    [LayoutDashboard, "Dashboard", true],
+    [Users, "Candidates", false],
+    [Briefcase, "Jobs", false],
+    [Calendar, "Interviews", false],
+    [Phone, "Calls", false],
+    [BarChart3, "Analytics", false],
+  ] as const;
+  const kpis = [
+    { label: "Candidates", value: "1,284", delta: "+12%", icon: Users },
+    { label: "Calls today", value: "86", delta: "+24%", icon: Phone },
+    { label: "Interviews booked", value: "32", delta: "+9%", icon: Calendar },
+    { label: "Avg. fit score", value: "84", delta: "+6%", icon: TrendingUp },
+  ];
+  const funnel = [
+    ["New", 100],
+    ["Screened", 78],
+    ["Shortlisted", 46],
+    ["Interview", 28],
+    ["Offer", 12],
+  ] as const;
+  const rows = [
+    { name: "Priya Patel", face: "priya", role: "Senior Software Engineer", score: 92, status: "Qualified", tone: "text-success bg-success-muted" },
+    { name: "Rahul Sharma", face: "rahul", role: "Product Designer", score: 88, status: "Interview", tone: "text-accent bg-accent-muted" },
+    { name: "Sneha Reddy", face: "sneha", role: "Data Analyst", score: 81, status: "Screening", tone: "text-info bg-info-muted" },
+    { name: "Amit Kumar", face: "amit", role: "Sales Lead", score: 74, status: "Scheduled", tone: "text-warning bg-warning-muted" },
+  ] as const;
+  const bars = [38, 52, 44, 68, 60, 82, 74, 96, 88, 70, 92, 100];
+
   return (
     <div className="relative mx-auto w-full max-w-5xl">
-      <div className="card-glass overflow-hidden rounded-2xl">
+      <div className="absolute -inset-x-6 -top-6 bottom-0 rounded-[32px] bg-accent/20 blur-3xl" aria-hidden="true" />
+      <div className="relative overflow-hidden rounded-2xl border border-white/[0.12] bg-dark-card shadow-[0_30px_120px_-20px_rgba(139,92,246,0.55)]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-300/60 to-transparent" />
         {/* window chrome */}
-        <div className="flex items-center gap-2 border-b border-dark-border px-4 py-3">
-          <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-          <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-          <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-          <span className="ml-3 text-[11px] text-dark-text-muted">Candidate · Priya Patel · Senior Software Engineer</span>
+        <div className="flex items-center gap-2 border-b border-dark-border bg-white/[0.02] px-4 py-2.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]/80" />
+          <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]/80" />
+          <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]/80" />
+          <span className="mx-auto flex items-center gap-1.5 rounded-md bg-white/[0.04] px-3 py-0.5 text-[10.5px] text-dark-text-muted">
+            <Search className="h-3 w-3" /> app.neha.ai/dashboard
+          </span>
+          <span className="w-12" />
         </div>
 
-        <div className="grid gap-px bg-dark-border md:grid-cols-5">
-          {/* Call transcript */}
-          <div className="bg-dark-card p-5 md:col-span-3">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[12px] font-semibold text-dark-text">
-                <Headphones className="h-4 w-4 text-accent" />
-                Screening call
-              </div>
-              <span className="rounded-full bg-success-muted px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-success">
-                Completed · 4:12
-              </span>
+        <div className="flex text-left">
+          {/* sidebar */}
+          <aside className="hidden w-44 shrink-0 border-r border-dark-border bg-dark-secondary p-3 md:block">
+            <div className="mb-4 flex items-center gap-2 px-2 pt-1">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-purple-400 text-[11px] font-bold text-white">N</span>
+              <span className="text-[12px] font-semibold text-dark-text">Neha</span>
             </div>
-            <div className="space-y-3 text-[12.5px] leading-relaxed">
-              <div className="flex gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-muted text-[10px] font-bold text-accent">N</span>
-                <p className="rounded-2xl rounded-tl-sm bg-white/[0.04] px-3.5 py-2.5 text-dark-text-secondary">
-                  Hi Priya, this is Neha calling from the recruiting team. Do you have a few minutes to talk about the Senior Software Engineer role?
-                </p>
+            <ul className="space-y-0.5">
+              {nav.map(([Icon, label, active]) => (
+                <li
+                  key={label}
+                  className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[12px] font-medium ${
+                    active ? "bg-accent-muted text-accent" : "text-dark-text-muted"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 rounded-xl border border-dark-border bg-white/[0.03] p-3">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-dark-text">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
+                </span>
+                Neha is live
               </div>
-              <div className="flex gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-[10px] font-bold text-dark-text-muted">P</span>
-                <p className="rounded-2xl rounded-tl-sm bg-white/[0.02] px-3.5 py-2.5 text-dark-text-secondary">
-                  Yes, absolutely. I&apos;m currently serving a 60-day notice period, and I&apos;m open to a hybrid setup.
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-muted text-[10px] font-bold text-accent">N</span>
-                <p className="rounded-2xl rounded-tl-sm bg-white/[0.04] px-3.5 py-2.5 text-dark-text-secondary">
-                  Great. And what compensation range are you expecting for this move?
-                </p>
-              </div>
+              <p className="mt-1 text-[10.5px] leading-snug text-dark-text-muted">3 calls in progress, 14 queued</p>
             </div>
-          </div>
+          </aside>
 
-          {/* Score */}
-          <div className="bg-dark-card p-5 md:col-span-2">
-            <div className="mb-4 flex items-center gap-2 text-[12px] font-semibold text-dark-text">
-              <Sparkles className="h-4 w-4 text-accent" />
-              AI assessment
-            </div>
-            <div className="mb-5 flex items-end gap-3">
-              <span className="font-display text-5xl text-dark-text">92</span>
-              <span className="mb-1.5 rounded-full bg-success-muted px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-success">
-                Qualified
+          {/* main */}
+          <div className="min-w-0 flex-1 p-4 md:p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-[15px] font-semibold text-dark-text">Good morning, Anika</p>
+                <p className="text-[11.5px] text-dark-text-muted">Here is what Neha handled overnight</p>
+              </div>
+              <span className="hidden items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-[11px] font-semibold text-white sm:flex">
+                <Plus className="h-3 w-3" /> New role
               </span>
             </div>
-            {[
-              ["Location fit", 95],
-              ["Work model", 100],
-              ["Notice period", 90],
-              ["CTC alignment", 90],
-              ["Role experience", 95],
-            ].map(([label, value]) => (
-              <div key={label} className="mb-2.5">
-                <div className="mb-1 flex justify-between text-[11px] text-dark-text-muted">
-                  <span>{label}</span>
-                  <span className="text-dark-text-secondary">{value}</span>
+
+            {/* KPIs */}
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {kpis.map(({ label, value, delta, icon: Icon }) => (
+                <div key={label} className="rounded-xl border border-dark-border bg-white/[0.03] p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-dark-text-muted">{label}</span>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent-muted text-accent">
+                      <Icon className="h-3 w-3" />
+                    </span>
+                  </div>
+                  <div className="mt-1.5 flex items-baseline gap-2">
+                    <span className="font-display text-2xl text-dark-text">{value}</span>
+                    <span className="text-[10.5px] font-semibold text-success">{delta}</span>
+                  </div>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                  <div className="h-full rounded-full bg-gradient-to-r from-accent to-purple-400" style={{ width: `${value}%` }} />
+              ))}
+            </div>
+
+            <div className="mt-3 grid gap-3 lg:grid-cols-5">
+              {/* chart */}
+              <div className="rounded-xl border border-dark-border bg-white/[0.03] p-4 lg:col-span-3">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="text-[12px] font-semibold text-dark-text">Screening calls</span>
+                  <span className="rounded-md bg-white/[0.05] px-2 py-0.5 text-[10px] text-dark-text-muted">Last 12 weeks</span>
+                </div>
+                <div className="flex h-28 items-end gap-2">
+                  {bars.map((h, i) => (
+                    <div key={i} className="flex-1 rounded-t-md bg-gradient-to-t from-accent/30 to-accent" style={{ height: `${h}%`, opacity: 0.55 + h / 250 }} />
+                  ))}
                 </div>
               </div>
-            ))}
+              {/* funnel */}
+              <div className="rounded-xl border border-dark-border bg-white/[0.03] p-4 lg:col-span-2">
+                <span className="mb-3 block text-[12px] font-semibold text-dark-text">Hiring pipeline</span>
+                <div className="space-y-2">
+                  {funnel.map(([label, w]) => (
+                    <div key={label} className="flex items-center gap-2 text-[10.5px]">
+                      <span className="w-16 text-dark-text-muted">{label}</span>
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                        <div className="h-full rounded-full bg-gradient-to-r from-accent to-purple-300" style={{ width: `${w}%` }} />
+                      </div>
+                      <span className="w-6 text-right text-dark-text-secondary">{w}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* candidates */}
+            <div className="mt-3 rounded-xl border border-dark-border bg-white/[0.03]">
+              <div className="flex items-center justify-between px-4 py-3">
+                <span className="text-[12px] font-semibold text-dark-text">Top candidates</span>
+                <span className="text-[11px] text-accent">View all</span>
+              </div>
+              {rows.map((r) => (
+                <div key={r.name} className="flex items-center gap-3 border-t border-dark-border px-4 py-2.5">
+                  <Peep name={r.face} size={28} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[12px] font-medium text-dark-text">{r.name}</p>
+                    <p className="truncate text-[10.5px] text-dark-text-muted">{r.role}</p>
+                  </div>
+                  <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${r.tone}`}>{r.status}</span>
+                  <span className="w-8 text-right font-display text-[15px] text-dark-text">{r.score}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -182,7 +270,7 @@ export default async function HomePage() {
     <div className="relative min-h-screen overflow-x-clip bg-dark-bg text-dark-text">
       {/* Animated wave field behind the hero. It renders at reduced resolution and 30fps, and
           fades into the page background with plain gradients (cheaper than masks or blurs). */}
-      <div className="pointer-events-none absolute inset-x-0 top-[150px] z-0 h-[1150px] overflow-hidden" aria-hidden="true">
+      <div className="pointer-events-none absolute inset-x-0 top-[20px] z-0 h-[900px] overflow-hidden" aria-hidden="true">
         <GradientWaves
           horizonColor="#3b1f8c"
           waveColor="#8b5cf6"
@@ -207,7 +295,7 @@ export default async function HomePage() {
           maxDpr={0.75}
           maxFps={30}
         />
-        <div className="absolute inset-x-0 top-0 h-[260px] bg-gradient-to-b from-dark-bg to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-[120px] bg-gradient-to-b from-dark-bg to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-[420px] bg-gradient-to-t from-dark-bg to-transparent" />
       </div>
 
@@ -241,23 +329,23 @@ export default async function HomePage() {
 
       <main className="relative z-10">
         {/* Hero */}
-        <section className="relative mx-auto max-w-6xl px-6 pb-20 pt-16 text-center md:pt-24">
-          <div className="mb-5 flex justify-center">
-            <PeepStack names={["priya", "rahul", "zoe", "amit", "maya", "asha"]} size={44} ring="ring-dark-bg" />
+        <section className="relative mx-auto max-w-6xl px-6 pb-20 pt-2 text-center md:pt-4">
+          <div className="mb-3 flex justify-center">
+            <PeepStack names={["priya", "rahul", "zoe", "amit", "maya", "asha"]} size={36} ring="ring-dark-bg" />
           </div>
-          <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-dark-border bg-white/[0.03] px-3.5 py-1.5 text-[12px] font-medium text-dark-text-secondary">
+          <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-dark-border bg-white/[0.03] px-3.5 py-1.5 text-[12px] font-medium text-dark-text-secondary">
             <Sparkles className="h-3.5 w-3.5 text-accent" />
             The AI recruiter that picks up the phone
           </div>
-          <h1 className="mx-auto max-w-3xl text-4xl font-bold leading-[1.1] tracking-tight text-dark-text md:text-6xl">
+          <h1 className="mx-auto max-w-3xl text-4xl font-bold leading-[1.08] tracking-tight text-dark-text md:text-5xl">
             Hire faster, without{" "}
             <span className="bg-gradient-to-r from-accent to-purple-300 bg-clip-text text-transparent">chasing candidates</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-[16px] leading-relaxed text-dark-text-secondary md:text-[17px]">
+          <p className="mx-auto mt-4 max-w-2xl text-[15px] leading-relaxed text-dark-text-secondary md:text-[17px]">
             Neha is an AI HR agent that calls applicants, screens them against your role, books interviews, collects
             feedback and keeps every candidate informed, for teams of any size and in any industry.
           </p>
-          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href={loggedIn ? "/dashboard" : "/signup"}
               className="btn-primary inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-[14px] font-semibold text-white"
@@ -273,7 +361,7 @@ export default async function HomePage() {
               </Link>
             )}
           </div>
-          <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[12.5px] text-dark-text-secondary">
+          <ul className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[12.5px] text-dark-text-secondary">
             {["No app for candidates to install", "Works over normal phone calls", "You stay in control of every decision"].map((t) => (
               <li key={t} className="flex items-center gap-1.5">
                 <CircleCheck className="h-3.5 w-3.5 text-success" />
@@ -282,12 +370,7 @@ export default async function HomePage() {
             ))}
           </ul>
 
-          <div className="relative mt-16 lg:mt-32">
-            {/* Two people standing on the dashboard: the team you are hiring for */}
-            <div className="pointer-events-none absolute bottom-full left-6 z-10 hidden items-end gap-1 lg:flex" aria-hidden="true">
-              <Illus name="standing-9" height={170} glow={false} />
-              <Illus name="standing-12" height={158} glow={false} flip />
-            </div>
+          <div className="relative mt-8">
             <ProductPreview />
             <div className="pointer-events-none absolute -bottom-10 -right-8 hidden rotate-[4deg] xl:block">
               <PhoneMock />

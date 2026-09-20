@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { createCriticLLM, createPlanLLM, createVerbLLM, KeyRotator } from "@cairnvibe/sdk/server";
 import { ManifestSchema } from "@cairnvibe/core";
 import { AUTH_DISABLED, createClient } from "@/app/lib/supabase/server";
-import { createSeededSkillStore } from "@/app/lib/cairn-skills";
 // `npm run cairn:build` regenerates this. Importing it (not reading from disk) bundles it into the function.
 import rawManifest from "../../.cairn/ui-manifest.json";
 
@@ -22,9 +21,6 @@ process.env.CAIRN_MAX_RATE_WAIT_MS ??= "50000";
 export const registeredActions: string[] = [];
 export const capability = (process.env.CAIRN_CAPABILITY as "explain" | "guide" | "act" | undefined) ?? "act";
 export const persona = process.env.CAIRN_PERSONA || "Neha Assistant";
-
-export const skills = createSeededSkillStore();
-export const SKILLS_SCOPE_ID = "neha-hr";
 
 type Provider = "anthropic" | "groq" | "gemini";
 function pickProvider(): Provider | null {

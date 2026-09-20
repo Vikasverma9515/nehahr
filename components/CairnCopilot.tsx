@@ -15,7 +15,6 @@ export function CairnCopilot() {
       onDo={() => {}}
       planEndpoint="/api/copilot/plan"
       criticEndpoint="/api/copilot/critic"
-      skillsSaveEndpoint="/api/copilot/skills/save"
       transcribeEndpoint="/api/copilot/transcribe"
       speakEndpoint="/api/copilot/speak"
       realtimeUrl={realtimeUrl}
