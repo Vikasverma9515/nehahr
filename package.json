@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prebuild": "cairn build . --provider groq --if-configured",
+    "cairn:build": "cairn build . --provider groq && node scripts/trim-cairn-manifest.mjs",
     "peeps": "node scripts/generate-peeps.mjs"
   },
   "dependencies": {

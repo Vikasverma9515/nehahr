@@ -49,3 +49,4 @@ __pycache__/
 .pytest_cache/
 .venv/
 venv/
+.cairn-cache/
