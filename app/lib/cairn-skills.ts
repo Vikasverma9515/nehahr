@@ -11,6 +11,14 @@ const skill = (id: string, name: string, description: string, instructions: stri
 
 export const SEED_SKILLS: Skill[] = [
   skill(
+    "irreversible-actions",
+    "Rejecting, deleting and sending: ask before you press",
+    "Reject, Delete candidate, Send offer/rejection email, Cancel meeting and Shortlist Anyway change real hiring data or contact a candidate. Ask the person to confirm in chat first.",
+    `These buttons cannot be undone or reach a real person: Reject (then "Yes, reject"), Delete candidate (then its confirm), Send Offer/Result Email (then the preview's Send), Cancel Meeting, Shortlist Anyway (HR Override), and Start AI call / Remind (which phone a candidate).
+Rule: never press one of these on your own initiative. Say which candidate and which action you are about to take and ask "Shall I go ahead?" in plain words, then act only after the person says yes in this conversation. Everything else (navigating, searching, filtering, opening a profile, reading, filling a form) you may do straight away.
+When you are asked to do several things and one of them is on this list, do all the safe steps first, then stop and ask before the risky one.`,
+  ),
+  skill(
     "using-the-sidebar",
     "Moving around Neha (sidebar)",
     "The left sidebar links to every section: Dashboard, Candidates, Jobs, Interviews, Calls, Helpdesk, Analytics, Settings.",

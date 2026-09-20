@@ -8,9 +8,19 @@ import rawManifest from "../../.cairn/ui-manifest.json";
 
 export const manifest = ManifestSchema.parse(rawManifest);
 
-/** The assistant runs no custom actions: it guides, and every write (Reject, Send offer…) stays a human click. */
+// Providers' free and low tiers cap requests per minute (Gemini free: 15). A multi-step task can touch
+// that mid-way, so let the SDK wait out a limit of up to ~50s instead of failing the task. The routes
+// below set maxDuration = 60 so the hosting platform allows the wait.
+process.env.CAIRN_MAX_RATE_WAIT_MS ??= "50000";
+
+/**
+ * The assistant works the real buttons (click, fill, select), so "act" is the tier that lets it finish
+ * a task instead of stopping at the page. Irreversible steps are protected twice: the app itself asks
+ * for confirmation (Reject, Delete and Send email all open a confirm step), and the
+ * "irreversible-actions" skill tells the agent to ask the person in chat before it presses them.
+ */
 export const registeredActions: string[] = [];
-export const capability = (process.env.CAIRN_CAPABILITY as "explain" | "guide" | "act" | undefined) ?? "guide";
+export const capability = (process.env.CAIRN_CAPABILITY as "explain" | "guide" | "act" | undefined) ?? "act";
 export const persona = process.env.CAIRN_PERSONA || "Neha Assistant";
 
 export const skills = createSeededSkillStore();
