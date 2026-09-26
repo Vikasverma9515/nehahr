@@ -7,6 +7,7 @@ import { MapPin, Users, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { PersonAvatar } from "@/app/components/person-avatar";
 import { ScreeningBuilder } from "@/app/components/screening-builder";
+import { ShareReviewButton } from "@/app/components/share-review-button";
 import type { ScreeningConfig } from "@/app/actions/screening";
 
 const STAGE_ORDER = [
@@ -79,7 +80,10 @@ export default async function JobDetailPage({
             {job.work_model && <span className="capitalize">{job.work_model}</span>}
           </div>
         </div>
-        <Badge>{job.status}</Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          <ShareReviewButton jobId={job.id} />
+          <Badge>{job.status}</Badge>
+        </div>
       </div>
 
       {/* ── Job details row ────────────────────────────────────── */}

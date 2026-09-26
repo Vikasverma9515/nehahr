@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, Bot, MessageSquare, TrendingDown, Video } from "lucide-react";
+import { AlertTriangle, Bot, MessageSquare, TrendingDown, UserCheck, Video } from "lucide-react";
 import { createClient } from "@/app/lib/supabase/server";
 import { ResolveRequestButton } from "@/app/components/resolve-request-button";
 
@@ -30,7 +30,7 @@ export async function NeedsYou() {
   const supabase = await createClient();
   const weekAgo = weekAgoIso();
 
-  const [requests, aiDone, atRisk, botFailed] = await Promise.all([
+  const [requests, aiDone, atRisk, botFailed, managerCalls] = await Promise.all([
     supabase.from("candidate_requests").select("id, kind, details, caller_number, created_at, candidates(id, name)")
       .eq("status", "open").order("created_at", { ascending: false }).limit(20),
     supabase.from("ai_interviews").select("id, score, summary, completed_at, candidates(id, name, stage)")
@@ -39,6 +39,8 @@ export async function NeedsYou() {
       .eq("pre_joining_status", "at_risk").limit(10),
     supabase.from("interviews").select("id, scheduled_at, candidates(id, name)")
       .eq("bot_status", "failed").gte("scheduled_at", weekAgo).limit(10),
+    supabase.from("candidate_reviews").select("id, decision, note, reviewer_name, created_at, candidates(id, name, stage)")
+      .gte("created_at", weekAgo).order("created_at", { ascending: false }).limit(15),
   ]);
 
   const one = <T,>(x: T | T[] | null | undefined): T | null => (Array.isArray(x) ? x[0] ?? null : x ?? null);
@@ -79,6 +81,18 @@ export async function NeedsYou() {
       title: `Neha couldn't join ${c?.name || "an"}'s Meet interview`,
       detail: "Nobody admitted the bot, or Meet blocked it. Add the bot account to the event or send her again.",
       href: c ? `/dashboard/candidates/${c.id}` : "/dashboard/interviews",
+    });
+  }
+
+  for (const r of managerCalls.data || []) {
+    const c = one(r.candidates as { id: string; name: string; stage: string } | { id: string; name: string; stage: string }[] | null);
+    // Advanced candidates now need scheduling; rejects and maybes just need a look.
+    if (!c || (r.decision === "advance" && c.stage !== "shortlisted")) continue;
+    items.push({
+      key: `rev-${r.id}`, icon: UserCheck, at: r.created_at,
+      title: `${r.reviewer_name || "Hiring manager"} ${r.decision === "advance" ? "advanced" : r.decision === "reject" ? "rejected" : "is unsure about"} ${c.name}`,
+      detail: r.note || (r.decision === "advance" ? "Schedule the interview" : "No note"),
+      href: `/dashboard/candidates/${c.id}`,
     });
   }
 
