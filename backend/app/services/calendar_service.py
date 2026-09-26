@@ -260,11 +260,41 @@ async def get_hr_access_token() -> tuple[str | None, str | None, str | None]:
 # FreeBusy / availability
 # ============================================================
 
+async def google_busy(interviewer: dict, start: datetime, end: datetime) -> list[tuple[datetime, datetime]] | None:
+    """Busy blocks from Google FreeBusy for one interviewer. None if not connected."""
+    access_token = await get_valid_access_token(interviewer["id"])
+    if not access_token:
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                GOOGLE_FREEBUSY_URL,
+                headers={"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"},
+                json={"timeMin": start.isoformat(), "timeMax": end.isoformat(), "items": [{"id": interviewer["email"]}]},
+            )
+            response.raise_for_status()
+            data = response.json()
+    except Exception as e:
+        print(f"[CALENDAR] FreeBusy query failed: {e}")
+        return None
+    blocks = []
+    for period in data.get("calendars", {}).get(interviewer["email"], {}).get("busy", []):
+        try:
+            blocks.append((
+                datetime.fromisoformat(period["start"].replace("Z", "+00:00")),
+                datetime.fromisoformat(period["end"].replace("Z", "+00:00")),
+            ))
+        except Exception:
+            continue
+    return blocks
+
+
 async def get_available_slots(
     interviewer_id: str,
     duration_minutes: int = 60,
     num_slots: int = 10,
     days_ahead: int = 7,
+    panel_ids: list[str] | None = None,
 ) -> list[dict]:
     """Find available interview slots spread across multiple days.
 
@@ -279,7 +309,17 @@ async def get_available_slots(
        "time": "10 AM"},
       ...
     ]
+
+    With ``panel_ids``, or for an interviewer on Microsoft 365, slots come
+    from the multi-calendar finder in ``availability``.
     """
+    provider = (db.get_supabase().table("interviewers").select("calendar_provider").eq(
+        "id", interviewer_id).single().execute().data or {}).get("calendar_provider", "google")
+    if panel_ids or provider == "microsoft":
+        from app.services import availability
+        ids = [interviewer_id] + [i for i in (panel_ids or []) if i != interviewer_id]
+        return await availability.find_slots(ids, duration_minutes, num_slots, days_ahead)
+
     access_token = await get_valid_access_token(interviewer_id)
     if not access_token:
         print(f"[CALENDAR] No access token for interviewer {interviewer_id}")
@@ -451,20 +491,40 @@ async def create_interview_event(
     job_title: str,
     interview_type: str = "video",
     notes: str | None = None,
+    extra_attendee_emails: list[str] | None = None,
 ) -> dict | None:
-    """Create a Google Calendar event on the interviewer's calendar.
+    """Create the interview event on the lead interviewer's calendar.
+
+    Google: Meet link, Microsoft 365: Teams link. Other panel members are
+    invited as attendees so it lands on their calendars too.
 
     - Auto-generates a Google Meet link for video interviews
     - Adds candidate as attendee (Google sends invite automatically)
     - Returns {event_id, meet_link, html_link}
     """
-    access_token = await get_valid_access_token(interviewer_id)
-    if not access_token:
+    supabase = db.get_supabase()
+    interviewer = supabase.table("interviewers").select("name, timezone, calendar_provider").eq(
+        "id", interviewer_id).single().execute()
+    if not interviewer.data:
         return None
 
-    supabase = db.get_supabase()
-    interviewer = supabase.table("interviewers").select("name, timezone").eq("id", interviewer_id).single().execute()
-    if not interviewer.data:
+    if interviewer.data.get("calendar_provider") == "microsoft":
+        from app.services import microsoft_calendar
+        attendees_ms = list(extra_attendee_emails or [])
+        if settings.meet_bot_email:
+            attendees_ms.append(settings.meet_bot_email)
+        result = await microsoft_calendar.create_event(
+            interviewer_id, start_iso=start_iso, end_iso=end_iso,
+            subject=f"Interview: {candidate_name} — {job_title}",
+            body_html=f"<p>Interview with {candidate_name} for {job_title}. Scheduled by Neha.</p>" + (f"<p>{notes}</p>" if notes else ""),
+            attendee_emails=attendees_ms, online=interview_type == "video",
+        )
+        if result:
+            result["interviewer_name"] = interviewer.data["name"]
+        return result
+
+    access_token = await get_valid_access_token(interviewer_id)
+    if not access_token:
         return None
 
     tz_name = interviewer.data["timezone"]
@@ -492,6 +552,9 @@ async def create_interview_event(
     # in the lobby when Neha is part of the interview.
     if settings.meet_bot_email:
         attendees.append({"email": settings.meet_bot_email, "displayName": settings.meet_bot_name})
+    # Panel members get the event on their own calendars.
+    for email in extra_attendee_emails or []:
+        attendees.append({"email": email})
 
     event_body: dict = {
         "summary": f"Interview: {candidate_name} — {job_title}",

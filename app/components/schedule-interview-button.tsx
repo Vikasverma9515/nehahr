@@ -31,6 +31,7 @@ export function ScheduleInterviewButton({ candidateId }: { candidateId: string }
   const [duration, setDuration] = useState(60);
   const [allInterviewers, setAllInterviewers] = useState<{ id: string; name: string; email: string }[]>([]);
   const [selectedInterviewerId, setSelectedInterviewerId] = useState<string>("");
+  const [panelIds, setPanelIds] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   async function handleClick() {
@@ -54,11 +55,13 @@ export function ScheduleInterviewButton({ candidateId }: { candidateId: string }
     });
   }
 
-  async function handleChangeInterviewer(newId: string) {
+  async function handleChangeInterviewer(newId: string, panel: string[] = panelIds) {
     setSelectedInterviewerId(newId);
+    const nextPanel = panel.filter((p) => p !== newId);
+    setPanelIds(nextPanel);
     setLoadingSlots(true);
     setError(null);
-    const res = await previewSlots(candidateId, newId);
+    const res = await previewSlots(candidateId, newId, nextPanel);
     if (res.error) {
       setError(res.error);
     } else if (res.data) {
@@ -83,6 +86,7 @@ export function ScheduleInterviewButton({ candidateId }: { candidateId: string }
         filtered,
         interviewType,
         duration,
+        panelIds,
       );
       if (res.error) {
         setError(res.error);
@@ -217,6 +221,27 @@ export function ScheduleInterviewButton({ candidateId }: { candidateId: string }
                 </select>
               </div>
             </div>
+
+            {/* Panel: others who must be free too */}
+            {allInterviewers.length > 1 && (
+              <div className="mb-5">
+                <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.1em] text-[#787994]">
+                  Panel (only times everyone is free)
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {allInterviewers.filter((i) => i.id !== selectedInterviewerId).map((i) => {
+                    const on = panelIds.includes(i.id);
+                    return (
+                      <button key={i.id} type="button"
+                        onClick={() => handleChangeInterviewer(selectedInterviewerId, on ? panelIds.filter((x) => x !== i.id) : [...panelIds, i.id])}
+                        className={`rounded-full border px-2.5 py-1 text-[11px] ${on ? "border-accent/50 bg-accent/15 text-[#f0f0f5]" : "border-white/[0.08] text-[#787994]"}`}>
+                        {on ? "✓ " : "+ "}{i.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Slots with checkboxes */}
             <div className="mb-2 flex items-center justify-between">

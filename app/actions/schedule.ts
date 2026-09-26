@@ -4,9 +4,10 @@ import { backendFetch } from "@/app/lib/backend";
 
 import { revalidatePath } from "next/cache";
 
-export async function previewSlots(candidateId: string, interviewerId?: string) {
+export async function previewSlots(candidateId: string, interviewerId?: string, panelIds?: string[]) {
   const params = new URLSearchParams({ candidate_id: candidateId });
   if (interviewerId) params.set("interviewer_id", interviewerId);
+  if (panelIds?.length) params.set("panel", panelIds.join(","));
 
   const url = `/api/interviews/slots/preview?${params}`;
   try {
@@ -57,6 +58,7 @@ export async function triggerSchedulingCall(
   selectedSlots?: { start: string; end: string; label: string }[],
   interviewType?: string,
   durationMinutes?: number,
+  panelIds?: string[],
 ) {
   const url = `/api/interviews/trigger-scheduling-call`;
   try {
@@ -69,6 +71,7 @@ export async function triggerSchedulingCall(
         selected_slots: selectedSlots,
         interview_type: interviewType,
         duration_minutes: durationMinutes,
+        panel_interviewer_ids: panelIds?.length ? panelIds : undefined,
       }),
     });
 

@@ -220,7 +220,7 @@ class CallOutcome:
         supabase = db.get_supabase()
         interview_result = (
             supabase.table("interviews")
-            .select("interviewer_id, interview_type")
+            .select("interviewer_id, interview_type, panel_interviewer_ids")
             .eq("id", self._interview_id)
             .single()
             .execute()
@@ -241,6 +241,13 @@ class CallOutcome:
         job = candidate.get("jobs") or {}
         job_title = job.get("title", "the role") if isinstance(job, dict) else "the role"
 
+        # Panel members are invited to the lead interviewer's event.
+        panel_emails: list[str] = []
+        panel_ids = [i for i in (interview_result.data.get("panel_interviewer_ids") or []) if i != interviewer_id]
+        if panel_ids:
+            rows = supabase.table("interviewers").select("email").in_("id", panel_ids).execute().data or []
+            panel_emails = [r["email"] for r in rows if r.get("email")]
+
         # Create the event
         from app.services import calendar_service
         booking = await calendar_service.create_interview_event(
@@ -251,6 +258,7 @@ class CallOutcome:
             candidate_email=candidate_email,
             job_title=job_title,
             interview_type=interview_type,
+            extra_attendee_emails=panel_emails,
         )
 
         if not booking:

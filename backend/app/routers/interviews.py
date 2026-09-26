@@ -118,6 +118,7 @@ async def get_slots_preview(
     candidate_id: str = Query(...),
     interviewer_id: str | None = Query(None),
     duration_minutes: int = Query(60),
+    panel: str | None = Query(None, description="Comma-separated extra interviewer ids"),
 ):
     """Fetch 3 available slots for HR to preview before triggering the scheduling call.
 
@@ -128,7 +129,7 @@ async def get_slots_preview(
     # Load candidate and job
     candidate_result = (
         supabase.table("candidates")
-        .select("id, name, phone, email, job_id, jobs(title, default_interviewer_id, default_interview_type, default_interview_duration_minutes)")
+        .select("id, name, phone, email, job_id, jobs(title, default_interviewer_id, default_interview_type, default_interview_duration_minutes, default_panel_interviewer_ids)")
         .eq("id", candidate_id)
         .single()
         .execute()
@@ -153,11 +154,13 @@ async def get_slots_preview(
     if duration_minutes == 60 and job.get("default_interview_duration_minutes"):
         duration_minutes = job["default_interview_duration_minutes"]
 
+    panel_ids = [p for p in (panel or "").split(",") if p] or (job.get("default_panel_interviewer_ids") or [])
     slots = await calendar_service.get_available_slots(
         interviewer_id=interviewer_id,
         duration_minutes=duration_minutes,
         num_slots=10,
         days_ahead=7,
+        panel_ids=panel_ids,
     )
 
     # Load interviewer name for display
@@ -188,6 +191,7 @@ class TriggerSchedulingRequest(BaseModel):
     interview_type: str | None = None
     selected_slots: list[dict] | None = None  # HR-curated slots from the modal
     duration_minutes: int | None = None
+    panel_interviewer_ids: list[str] | None = None  # others who must attend
 
 
 @router.post("/trigger-scheduling-call")
@@ -204,7 +208,7 @@ async def trigger_scheduling_call(req: TriggerSchedulingRequest):
 
     candidate_result = (
         supabase.table("candidates")
-        .select("id, name, phone, email, job_id, stage, jobs(title, default_interviewer_id, default_interview_type, default_interview_duration_minutes)")
+        .select("id, name, phone, email, job_id, stage, jobs(title, default_interviewer_id, default_interview_type, default_interview_duration_minutes, default_panel_interviewer_ids)")
         .eq("id", req.candidate_id)
         .single()
         .execute()
@@ -232,7 +236,10 @@ async def trigger_scheduling_call(req: TriggerSchedulingRequest):
     interview_type = req.interview_type or job.get("default_interview_type", "video")
     duration = req.duration_minutes or job.get("default_interview_duration_minutes", 60)
 
-    # 1. Use HR-curated slots if provided, otherwise fetch from calendar
+    panel_ids = [i for i in (req.panel_interviewer_ids or job.get("default_panel_interviewer_ids") or [])
+                 if i != interviewer_id]
+
+    # 1. Use HR-curated slots if provided, otherwise fetch from calendar(s)
     if req.selected_slots and len(req.selected_slots) > 0:
         slots = req.selected_slots
     else:
@@ -241,6 +248,7 @@ async def trigger_scheduling_call(req: TriggerSchedulingRequest):
             duration_minutes=duration,
             num_slots=10,
             days_ahead=7,
+            panel_ids=panel_ids,
         )
 
     if not slots:
@@ -274,6 +282,7 @@ async def trigger_scheduling_call(req: TriggerSchedulingRequest):
         "status": "scheduled",
         "offered_slots": slots,
         "round_number": next_round,
+        "panel_interviewer_ids": panel_ids or None,
     }).execute()
 
     interview_id = interview_row.data[0]["id"] if interview_row.data else None

@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     google_client_id: str = ""
     google_client_secret: str = ""
 
+    # Microsoft 365 / Outlook calendars (optional)
+    ms_client_id: str = ""
+    ms_client_secret: str = ""
+    ms_tenant: str = "common"
+
     # App
     backend_url: str = "http://localhost:8000"
     frontend_url: str = "http://localhost:3000"
