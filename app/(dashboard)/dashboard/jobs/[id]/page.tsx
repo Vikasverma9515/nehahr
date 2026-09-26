@@ -9,6 +9,7 @@ import { PersonAvatar } from "@/app/components/person-avatar";
 import { ScreeningBuilder } from "@/app/components/screening-builder";
 import { ShareReviewButton } from "@/app/components/share-review-button";
 import { PublishJobControl } from "@/app/components/publish-job-control";
+import { PipelineBoard } from "@/app/components/pipeline-board";
 import type { ScreeningConfig } from "@/app/actions/screening";
 
 const STAGE_ORDER = [
@@ -21,7 +22,7 @@ export default async function JobDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ stage?: string }>;
+  searchParams: Promise<{ stage?: string; view?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -42,7 +43,7 @@ export default async function JobDetailPage({
 
   const { data: candidates } = await supabase
     .from("candidates")
-    .select("id, name, stage, score, email, current_location, created_at")
+    .select("id, name, stage, score, email, current_location, created_at, match_score")
     .eq("job_id", id)
     .order("created_at", { ascending: false });
 
@@ -157,9 +158,19 @@ export default async function JobDetailPage({
 
       {/* ── Pipeline tabs + candidates ─────────────────────────── */}
       <div>
-        <h2 className="mb-3 text-[13px] font-semibold uppercase tracking-[0.08em] text-dark-text-secondary">
-          Candidate Pipeline
-        </h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-dark-text-secondary">
+            Candidate Pipeline
+          </h2>
+          <div className="flex gap-1 rounded-lg bg-white/[0.03] p-0.5 text-[11px]">
+            <Link href={`/dashboard/jobs/${id}`} className={`rounded-md px-2.5 py-1 ${sp.view !== "board" ? "bg-white/[0.08] text-dark-text" : "text-dark-text-muted"}`}>List</Link>
+            <Link href={`/dashboard/jobs/${id}?view=board`} className={`rounded-md px-2.5 py-1 ${sp.view === "board" ? "bg-white/[0.08] text-dark-text" : "text-dark-text-muted"}`}>Board</Link>
+          </div>
+        </div>
+
+        {sp.view === "board" ? (
+          <PipelineBoard candidates={(candidates || []) as { id: string; name: string; stage: string; score: number | null; match_score: number | null }[]} />
+        ) : (<>
 
         {/* Stage tabs */}
         <div className="mb-4 flex items-center gap-0.5 overflow-x-auto rounded-xl border border-white/[0.08] bg-white/[0.02] p-1">
@@ -261,6 +272,7 @@ export default async function JobDetailPage({
               : `No candidates in ${activeStage.replace(/_/g, " ")}`}
           </p>
         )}
+        </>)}
       </div>
     </div>
   );
