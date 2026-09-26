@@ -23,7 +23,8 @@ export async function backendFetch(path: string, init: RequestInit = {}) {
       headers.set("Authorization", `Bearer ${session.access_token}`);
     }
   }
-  if (init.body && !headers.has("Content-Type")) {
+  // JSON by default; FormData sets its own multipart boundary.
+  if (typeof init.body === "string" && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
   return fetch(`${BACKEND_URL}${path}`, { cache: "no-store", ...init, headers });
