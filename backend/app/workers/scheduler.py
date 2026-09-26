@@ -505,8 +505,37 @@ async def _check_retention():
     enqueue("retention.purge", dedupe_key=f"retention:{day}", max_attempts=1)
 
 
+async def _check_onboarding():
+    """First-day (evening of the joining date) and first-week check-in calls."""
+    from zoneinfo import ZoneInfo
+    from datetime import date as date_type
+    from app.workers.queue import enqueue
+
+    supabase = db.get_supabase()
+    today = datetime.now(ZoneInfo("Asia/Kolkata"))
+    rows = supabase.table("candidates").select(
+        "id, joining_date, stage, day_one_call_at, week_one_call_at, pre_joining_status"
+    ).in_("stage", ["pre_joining", "joined"]).not_.is_("joining_date", "null").neq(
+        "pre_joining_status", "dropped").execute().data or []
+    for c in rows:
+        try:
+            joined = date_type.fromisoformat(str(c["joining_date"]))
+        except ValueError:
+            continue
+        days = (today.date() - joined).days
+        now_iso = datetime.now(timezone.utc).isoformat()
+        if days == 0 and today.hour >= 17 and not c.get("day_one_call_at"):
+            enqueue("call.initiate", {"candidate_id": c["id"], "call_type": "day_one"}, dedupe_key=f"day_one:{c['id']}")
+            supabase.table("candidates").update({"day_one_call_at": now_iso, "stage": "joined",
+                                                 "pre_joining_status": "joined"}).eq("id", c["id"]).execute()
+        elif days >= 7 and days <= 10 and not c.get("week_one_call_at"):
+            enqueue("call.initiate", {"candidate_id": c["id"], "call_type": "week_one"}, dedupe_key=f"week_one:{c['id']}")
+            supabase.table("candidates").update({"week_one_call_at": now_iso}).eq("id", c["id"]).execute()
+
+
 async def run_checks():
     """One pass over every scheduled check."""
+    await _check_onboarding()
     await _check_retention()
     await _check_meet_bots()
     await _check_reminders()

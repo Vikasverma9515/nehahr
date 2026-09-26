@@ -706,6 +706,21 @@ async def update_interview(interview_id: str, payload: dict):
     return result.data[0] if result.data else {}
 
 
+@router.post("/{interview_id}/no-show")
+async def candidate_not_joined(interview_id: str):
+    """The candidate hasn't joined: Neha calls them right now."""
+    iv = db.get_supabase().table("interviews").select("candidate_id, status").eq(
+        "id", interview_id).single().execute().data
+    if not iv:
+        raise HTTPException(status_code=404, detail="Interview not found")
+    if iv["status"] != "scheduled":
+        raise HTTPException(status_code=409, detail="This interview isn't scheduled")
+    try:
+        return call_service.initiate_call(candidate_id=iv["candidate_id"], call_type="no_show")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Couldn't call the candidate: {e}")
+
+
 @router.post("/{interview_id}/neha/join")
 async def send_neha_to_meet(interview_id: str):
     """Send Neha into this interview's Google Meet now."""

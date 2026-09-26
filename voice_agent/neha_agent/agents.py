@@ -310,6 +310,9 @@ AGENTS: dict[str, type[NehaAgent]] = {
     "pre_joining": PreJoiningAgent,
     "engagement": PreJoiningAgent,
     "inbound": InboundAgent,
+    "no_show": ReminderAgent,
+    "day_one": PreJoiningAgent,
+    "week_one": PreJoiningAgent,
 }
 
 

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Calendar, Check, Phone, Video } from "lucide-react";
-import { bookSlot, getSlots, requestCall, sendPortalRequest, type PortalInfo, type Slot } from "@/app/actions/portal";
+import { bookSlot, getSlots, requestCall, sendPortalRequest, uploadPortalDocument, type PortalDoc, type PortalInfo, type Slot } from "@/app/actions/portal";
 
 const card = "card-glass rounded-2xl p-6";
 
@@ -48,6 +48,8 @@ export function CandidatePortal({ token, info }: { token: string; info: PortalIn
           <a href={info.ai_interview_link} className="btn-primary mt-4 inline-flex rounded-xl px-4 py-2 text-[13px] font-semibold text-white">Start</a>
         </div>
       )}
+
+      {info.documents && <Documents token={token} docs={info.documents} />}
 
       {info.can_self_schedule && <SlotPicker token={token} />}
 
@@ -145,6 +147,46 @@ function RequestBox({ token, kind, label, placeholder, danger }: { token: string
           className={"rounded-xl px-4 py-2 text-[13px] font-semibold disabled:opacity-50 " + (danger ? "bg-red-500/70 text-white" : "bg-white/[0.08]")}>
           {danger ? "Withdraw" : "Send"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function Documents({ token, docs }: { token: string; docs: PortalDoc[] }) {
+  const [state, setState] = useState<Record<string, string>>({});
+  const [pending, startTransition] = useTransition();
+  const done = docs.filter((d) => d.upload && d.upload.status !== "rejected").length;
+
+  const upload = (kind: string, file: File) => startTransition(async () => {
+    const fd = new FormData();
+    fd.append("kind", kind);
+    fd.append("file", file);
+    setState((s) => ({ ...s, [kind]: "Uploading..." }));
+    const r = await uploadPortalDocument(token, fd);
+    setState((s) => ({ ...s, [kind]: r.error || "Uploaded" }));
+  });
+
+  return (
+    <div className={card}>
+      <h2 className="text-[15px] font-semibold">Documents for joining</h2>
+      <p className="mt-1 text-[13px] text-dark-text-secondary">{done} of {docs.length} uploaded. PDF, JPG or PNG, up to 8 MB each.</p>
+      <div className="mt-4 space-y-2">
+        {docs.map((d) => {
+          const status = state[d.kind] || (d.upload ? (d.upload.status === "verified" ? "Verified" : d.upload.status === "rejected" ? `Please re-upload: ${d.upload.note || "not accepted"}` : "Uploaded, being checked") : "");
+          return (
+            <div key={d.kind} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/[0.06] px-4 py-3">
+              <div>
+                <p className="text-[13px] text-dark-text">{d.label}</p>
+                {status && <p className={"text-[11px] " + (status.startsWith("Please") ? "text-amber-400" : "text-dark-text-muted")}>{status}</p>}
+              </div>
+              <label className="cursor-pointer rounded-lg bg-white/[0.06] px-3 py-1.5 text-[12px]">
+                {d.upload ? "Replace" : "Upload"}
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" disabled={pending}
+                  onChange={(e) => e.target.files?.[0] && upload(d.kind, e.target.files[0])} />
+              </label>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

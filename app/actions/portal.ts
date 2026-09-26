@@ -14,6 +14,13 @@ export type PortalInfo = {
   ai_interview_link: string | null;
   can_self_schedule: boolean;
   closed: boolean;
+  documents: PortalDoc[] | null;
+};
+
+export type PortalDoc = {
+  kind: string;
+  label: string;
+  upload: { id: string; file_name: string | null; status: string; note: string | null } | null;
 };
 
 export type Slot = { start: string; end: string; label: string; day?: string };
@@ -53,4 +60,14 @@ export async function getPortalLink(candidateId: string) {
   const res = await backendFetch(`/api/portal/link/${candidateId}`, { method: "POST" });
   if (!res.ok) return { error: "Couldn't create the link" };
   return (await res.json()) as { link: string };
+}
+
+export async function uploadPortalDocument(token: string, formData: FormData) {
+  const res = await fetch(`${BACKEND_URL}/api/portal/public/${encodeURIComponent(token)}/documents`, {
+    method: "POST", body: formData, cache: "no-store",
+  }).catch(() => null);
+  if (!res) return { error: "Couldn't reach us" };
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) return { error: (body as { detail?: string }).detail || "Upload failed" };
+  return { success: true };
 }

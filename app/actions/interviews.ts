@@ -168,3 +168,12 @@ export async function recallNehaFromMeet(interviewId: string, candidateId: strin
   revalidatePath(`/dashboard/candidates/${candidateId}`);
   return { success: true };
 }
+
+export async function callNoShow(interviewId: string) {
+  const res = await backendFetch(`/api/interviews/${interviewId}/no-show`, { method: "POST" });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    return { error: (e as { detail?: string }).detail || "Couldn't call" };
+  }
+  return { success: true };
+}
