@@ -114,9 +114,9 @@ async def end_call(call_id: str):
     if not call:
         raise HTTPException(status_code=404, detail="Call not found")
 
-    if call.get("twilio_call_sid"):
+    if call.get("twilio_call_sid") or call.get("room_name"):
         try:
-            call_service.end_call(call["twilio_call_sid"])
+            call_service.end_call(call.get("twilio_call_sid"), call.get("room_name"))
         except Exception:
             pass
 

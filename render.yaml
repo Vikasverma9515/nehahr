@@ -37,6 +37,16 @@ services:
         sync: false
       - key: SUPABASE_JWT_SECRET
         sync: false
+      - key: VOICE_RUNTIME
+        value: twilio
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      - key: LIVEKIT_SIP_TRUNK_ID
+        sync: false
       # Your public backend URL, e.g. https://neha-backend.onrender.com
       - key: BACKEND_URL
         sync: false
@@ -47,3 +57,38 @@ services:
         value: Our Company
       - key: HR_SENDER_NAME
         value: Recruiting Team
+
+  # LiveKit voice agent (voice_agent/). Long-running worker: it connects out to
+  # LiveKit and waits for dispatches, so it needs no public URL.
+  - type: worker
+    name: neha-voice-agent
+    runtime: docker
+    rootDir: voice_agent
+    dockerfilePath: ./Dockerfile
+    plan: standard
+    autoDeploy: true
+    envVars:
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+      - key: BACKEND_API_URL
+        sync: false
+      - key: INTERNAL_API_KEY
+        sync: false
+      - key: DEEPGRAM_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: AWS_BEARER_TOKEN_BEDROCK
+        sync: false
+      - key: CARTESIA_API_KEY
+        sync: false
+      - key: TAVUS_API_KEY
+        sync: false
+      - key: TAVUS_FACE_ID
+        sync: false
+      - key: TAVUS_PAL_ID
+        sync: false
