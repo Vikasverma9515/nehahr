@@ -1,11 +1,9 @@
 "use server";
 
-// Server actions run server-side, so always hit localhost directly.
-// The ngrok URL (BACKEND_URL) is only for Twilio webhooks (external).
-const BACKEND_URL = process.env.BACKEND_API_URL || "http://localhost:8000";
+import { backendFetch } from "@/app/lib/backend";
 
 export async function triggerCall(candidateId: string, callType: string = "screening") {
-  const res = await fetch(`${BACKEND_URL}/api/calls/initiate`, {
+  const res = await backendFetch(`/api/calls/initiate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

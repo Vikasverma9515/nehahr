@@ -2,12 +2,13 @@
 
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 
 from app.config import settings
 from app.services import calendar_service
 from app.services import db
+from app.security import require_signed_link
 
 router = APIRouter()
 
@@ -26,7 +27,7 @@ def _error_page(title: str, body: str, status: int = 400) -> HTMLResponse:
     )
 
 
-@router.get("/google/start")
+@router.get("/google/start", dependencies=[Depends(require_signed_link)])
 async def start_google_oauth(interviewer_id: str = Query(...)):
     """Kick off OAuth flow for a specific interviewer.
 
@@ -43,7 +44,7 @@ async def start_google_oauth(interviewer_id: str = Query(...)):
     return RedirectResponse(url=auth_url)
 
 
-@router.get("/google/start-hr")
+@router.get("/google/start-hr", dependencies=[Depends(require_signed_link)])
 async def start_hr_sender_oauth():
     """Kick off OAuth flow for the dedicated HR sender account.
 
@@ -73,6 +74,10 @@ async def google_oauth_callback(
 
     if not code or not state:
         raise HTTPException(status_code=400, detail="Missing code or state")
+
+    state = calendar_service.verify_state(state)
+    if state is None:
+        return _error_page("Invalid sign-in link", "Please start the connection again from Settings.", status=403)
 
     try:
         token_data = await calendar_service.exchange_code_for_tokens(code)

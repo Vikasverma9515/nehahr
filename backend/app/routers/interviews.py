@@ -76,6 +76,8 @@ Best regards,
         }
 
 router = APIRouter()
+# Token-authenticated endpoints for interviewers without an account.
+public_router = APIRouter()
 
 
 @router.get("/")
@@ -695,7 +697,7 @@ async def update_interview(interview_id: str, payload: dict):
 # Public feedback endpoints — no auth, token-based
 # =====================================================================
 
-@router.get("/feedback-form/{token}")
+@public_router.get("/feedback-form/{token}")
 async def get_feedback_form_data(token: str):
     """Public endpoint — interviewer clicks the email link, frontend fetches
     this to show the form with context (candidate name, job, etc.).
@@ -729,7 +731,7 @@ async def get_feedback_form_data(token: str):
     }
 
 
-@router.post("/feedback-form/{token}")
+@public_router.post("/feedback-form/{token}")
 async def submit_feedback_by_token(token: str, payload: FeedbackPayload):
     """Public endpoint — interviewer submits feedback via the token link.
 

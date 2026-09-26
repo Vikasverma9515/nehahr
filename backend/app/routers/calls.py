@@ -1,15 +1,18 @@
 """Call management API routes."""
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.config import settings
 from app.services.call_service import call_service
 from app.services import db
+from app.security import require_signed_link
 
 router = APIRouter()
+# Opened directly by the browser's <audio> tag, so it uses a signed link.
+public_router = APIRouter()
 
 
 class InitiateCallRequest(BaseModel):
@@ -68,7 +71,7 @@ async def get_call(call_id: str):
     return call
 
 
-@router.get("/{call_id}/recording")
+@public_router.get("/{call_id}/recording", dependencies=[Depends(require_signed_link)])
 async def get_call_recording(call_id: str):
     """Proxy the Twilio recording audio through our backend.
 
