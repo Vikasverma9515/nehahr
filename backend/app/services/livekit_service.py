@@ -137,6 +137,7 @@ async def start_browser_session(
     user_name: str,
     pipeline: dict | None = None,
     is_test: bool = False,
+    extra_metadata: dict | None = None,
 ) -> dict:
     """A browser conversation (playground or interview room): dispatch + user token."""
     _require_config()
@@ -152,6 +153,7 @@ async def start_browser_session(
         "candidate_id": candidate_id,
         "channel": channel,
         "pipeline": pipeline or {},
+        **(extra_metadata or {}),
     })
     token = participant_token(
         room, identity=user_identity or f"user-{uuid.uuid4().hex[:8]}", name=user_name,
@@ -163,3 +165,43 @@ async def start_browser_session(
         "url": settings.livekit_url,
         "token": token,
     }
+
+
+def recording_configured() -> bool:
+    return bool(settings.egress_s3_bucket and settings.egress_s3_access_key and settings.egress_s3_secret)
+
+
+async def start_room_recording(room: str, call_id: str) -> str | None:
+    """Record the room (speaker layout, MP4) to S3-compatible storage.
+
+    Works with AWS S3, Cloudflare R2 or Supabase Storage's S3 endpoint. The
+    file URL is saved on the call so the dashboard can play it back.
+    """
+    if not (is_configured() and recording_configured()):
+        return None
+    path = f"interviews/{call_id}.mp4"
+    lk = _client()
+    try:
+        await lk.egress.start_room_composite_egress(api.RoomCompositeEgressRequest(
+            room_name=room,
+            layout="speaker",
+            file_outputs=[api.EncodedFileOutput(
+                filepath=path,
+                s3=api.S3Upload(
+                    bucket=settings.egress_s3_bucket,
+                    region=settings.egress_s3_region,
+                    access_key=settings.egress_s3_access_key,
+                    secret=settings.egress_s3_secret,
+                    endpoint=settings.egress_s3_endpoint,
+                    force_path_style=bool(settings.egress_s3_endpoint),
+                ),
+            )],
+        ))
+    except Exception as e:
+        print(f"[EGRESS] Could not start recording for {room}: {e}")
+        return None
+    finally:
+        await lk.aclose()
+    url = f"{settings.egress_public_base_url.rstrip('/')}/{path}" if settings.egress_public_base_url else path
+    db.update_call_status(call_id, "in_progress", recording_url=url)
+    return url

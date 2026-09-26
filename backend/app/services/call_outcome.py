@@ -372,6 +372,10 @@ class CallOutcome:
         if self.call_type in ("pre_joining", "engagement"):
             await self._finalize_pre_joining_call(extracted)
 
+        # For AI video interviews: score the answers onto the invite
+        if self.call_type == "interview":
+            await self._finalize_ai_interview(extracted, summary)
+
         print(f"[HANDLER] Call {self.call_id} ended and saved")
 
     async def _finalize_scheduling_call(self, extracted: dict):
@@ -651,6 +655,29 @@ class CallOutcome:
                     "last_contact_at": datetime.now(timezone.utc).isoformat(),
                 }).eq("id", self.candidate_id).execute()
                 print(f"[HANDLER] Result call: INCONCLUSIVE after retry — HR flagged")
+
+    async def _finalize_ai_interview(self, extracted: dict, summary: str | None):
+        """Store the interview result on the ai_interviews row and flag HR."""
+        supabase = db.get_supabase()
+        answers = (extracted or {}).get("role_specific_answers") or []
+        ratings = [a.get("rating") for a in answers if isinstance(a.get("rating"), (int, float))]
+        score = round(sum(ratings) / len(ratings) * 20) if ratings else None
+        completed = self._ended_naturally() and len(answers) >= 2
+        supabase.table("ai_interviews").update({
+            "status": "completed" if completed else "invited",
+            "score": score,
+            "summary": summary,
+            "answers": answers,
+            "completed_at": datetime.now(timezone.utc).isoformat() if completed else None,
+        }).eq("call_id", self.call_id).execute()
+        note = (
+            f"AI video interview done: {score}/100 over {len(answers)} questions." if completed
+            else "AI video interview ended early; the candidate can rejoin with the same link."
+        )
+        supabase.table("candidates").update({
+            "scheduling_notes": note,
+            "last_contact_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", self.candidate_id).execute()
 
     async def _finalize_pre_joining_call(self, extracted: dict):
         """Handle pre-joining (Track A) and engagement (Track B) call outcomes.

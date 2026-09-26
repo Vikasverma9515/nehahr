@@ -43,6 +43,14 @@ class Settings(BaseSettings):
     # or "livekit" (the voice agent in voice_agent/).
     voice_runtime: str = "twilio"
 
+    # Room recordings (LiveKit Egress → S3-compatible storage). Optional.
+    egress_s3_bucket: str = ""
+    egress_s3_region: str = ""
+    egress_s3_access_key: str = ""
+    egress_s3_secret: str = ""
+    egress_s3_endpoint: str = ""        # set for R2 / Supabase Storage / MinIO
+    egress_public_base_url: str = ""    # e.g. https://<bucket>.r2.dev
+
     # Security
     # SUPABASE_JWT_SECRET: only for projects on the legacy HS256 secret; newer
     # projects are verified against the project's JWKS automatically.

@@ -45,6 +45,7 @@ from .telemetry import LatencyTracker
 log = logging.getLogger("neha.worker")
 
 STATE_TOPIC = "neha.state"      # live snapshot for the playground
+CONTROL_TOPIC = "neha.control"  # recruiter pause / resume
 AVATAR_CHANNELS = {"room", "meet", "playground"}
 
 def prewarm(proc: JobProcess) -> None:
@@ -168,11 +169,38 @@ async def entrypoint(ctx: JobContext) -> None:
     def _on_agent_state(ev) -> None:
         publish_state({"agent_state": ev.new_state})
 
+    # ── Recruiter take-over (room / playground) ──────────────────────────
+    paused = {"on": False}
+
+    def _on_data(packet: rtc.DataPacket) -> None:
+        if packet.topic != CONTROL_TOPIC or not packet.participant:
+            return
+        if packet.participant.attributes.get("role") not in ("recruiter", "tester"):
+            return
+        try:
+            action = json.loads(packet.data.decode()).get("action")
+        except Exception:
+            return
+        if action == "pause" and not paused["on"]:
+            paused["on"] = True
+            session.interrupt()
+            session.input.set_audio_enabled(False)
+            publish_state({"paused": True})
+        elif action == "resume" and paused["on"]:
+            paused["on"] = False
+            session.input.set_audio_enabled(True)
+            publish_state({"paused": False})
+            session.generate_reply(instructions=(
+                "A human recruiter just spoke with the candidate and has handed back to you. "
+                "Briefly acknowledge it and continue where you left off."))
+
+    ctx.room.on("data_received", _on_data)
+
     away_count = {"n": 0}
 
     @session.on("user_state_changed")
     def _on_user_state(ev) -> None:
-        if ev.new_state != "away" or state.ended_naturally:
+        if ev.new_state != "away" or state.ended_naturally or paused["on"]:
             return
         away_count["n"] += 1
         if away_count["n"] == 1:
@@ -227,6 +255,10 @@ async def entrypoint(ctx: JobContext) -> None:
         close_on_disconnect=True,
         delete_room_on_close=is_phone,
     )
+
+    if channel == "room" and (call_ctx.get("candidate") or {}).get("id"):
+        # Always listen to the candidate, never to a recruiter who joins to watch.
+        room_options.participant_identity = f"candidate-{call_ctx['candidate']['id']}"
 
     if meta.get("inbound_identity"):
         room_options.participant_identity = meta["inbound_identity"]
