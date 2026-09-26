@@ -63,16 +63,20 @@ class _BedrockClaude(anthropic.LLM):
         return None
 
 
-def build_tts(spec: str | None = None):
+def build_tts(spec: str | None = None, language: str | None = None):
+    """language: 'hi' / 'hinglish' switch to a Hindi-capable voice setup."""
     provider = (spec or settings.tts_provider).split("/")[0]
+    hindi = language in ("hi", "hinglish")
     if provider == "elevenlabs":
+        # Flash v2.5 is multilingual and handles Hindi and Hinglish.
         kwargs = {"model": "eleven_flash_v2_5", **_key(settings.elevenlabs_api_key)}
         if settings.elevenlabs_voice:
             kwargs["voice_id"] = settings.elevenlabs_voice
         return elevenlabs.TTS(**kwargs)
-    if provider == "deepgram":
+    if provider == "deepgram" and not hindi:
         return deepgram.TTS(model=settings.deepgram_tts_model, **_key(settings.deepgram_api_key))
-    kwargs = {"model": "sonic-3", **_key(settings.cartesia_api_key)}
+    # Deepgram Aura has no Hindi voice, so Hindi calls use Cartesia (multilingual).
+    kwargs = {"model": "sonic-3", "language": "hi" if hindi else "en", **_key(settings.cartesia_api_key)}
     if settings.cartesia_voice:
         kwargs["voice"] = settings.cartesia_voice
     return cartesia.TTS(**kwargs)

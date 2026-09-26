@@ -84,6 +84,13 @@ def transcript_from_history(session: AgentSession) -> list[dict]:
     return items
 
 
+def _call_language(call_ctx: dict) -> str | None:
+    lang = (call_ctx.get("candidate") or {}).get("preferred_language")
+    if not lang:
+        lang = (call_ctx.get("screening_config") or {}).get("language")
+    return None if lang in (None, "", "auto") else lang
+
+
 async def _load_context(backend: BackendClient, meta: dict) -> dict:
     # Console / local testing can pass a full context instead of a call id.
     if meta.get("context_override"):
@@ -133,7 +140,7 @@ async def entrypoint(ctx: JobContext) -> None:
     session = AgentSession(
         stt=build_stt(pipeline_spec.get("stt"), phone=is_phone),
         llm=build_llm(pipeline_spec.get("llm")),
-        tts=build_tts(pipeline_spec.get("tts")),
+        tts=build_tts(pipeline_spec.get("tts"), language=_call_language(call_ctx)),
         vad=ctx.proc.userdata["vad"],
         turn_handling=turn_handling(),
         userdata=state,

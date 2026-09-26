@@ -728,7 +728,7 @@ async def get_feedback_form_data(token: str):
     supabase = db.get_supabase()
     result = (
         supabase.table("interviews")
-        .select("id, status, feedback_status, interview_type, scheduled_at, candidates(name), jobs(title)")
+        .select("id, status, feedback_status, interview_type, scheduled_at, ai_notes, candidates(name), jobs(title)")
         .eq("feedback_token", token)
         .limit(1)
         .execute()
@@ -749,6 +749,21 @@ async def get_feedback_form_data(token: str):
         "job_title": job.get("title", ""),
         "interview_type": iv.get("interview_type", "video"),
         "scheduled_at": iv.get("scheduled_at"),
+        "ai_draft": _feedback_draft(iv.get("ai_notes")),
+    }
+
+
+def _feedback_draft(notes: dict | None) -> dict | None:
+    """Turn Neha's Meet notes into a starting point for the interviewer's feedback."""
+    if not notes:
+        return None
+    answers = notes.get("answers") or []
+    strong = [f"{a.get('question')}: {a.get('answer')}" for a in answers if (a.get("rating") or 0) >= 4]
+    weak = [f"{a.get('question')}: {a.get('answer')}" for a in answers if 0 < (a.get("rating") or 0) <= 2]
+    return {
+        "strengths": "\n".join(strong),
+        "concerns": "\n".join(weak),
+        "notes": notes.get("summary") or "",
     }
 
 

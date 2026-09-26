@@ -4,12 +4,17 @@ import { useState } from "react";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
+type Draft = { strengths: string; concerns: string; notes: string };
+
 export function FeedbackForm({
   token,
   candidateName,
+  draft,
 }: {
   token: string;
   candidateName: string;
+  /** Neha's notes from the Meet, when she was in the interview. */
+  draft?: Draft | null;
 }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -155,6 +160,11 @@ export function FeedbackForm({
 
       {/* Text fields */}
       <div className="space-y-4">
+        {draft && (
+          <p className="rounded-lg border border-[#8b5cf6]/30 bg-[#8b5cf6]/10 px-3 py-2 text-[12px] text-[#d8ccff]">
+            Neha drafted these from her interview notes. Edit anything before you submit.
+          </p>
+        )}
         {[
           ["strengths", "Strengths", "What did the candidate do well?"],
           ["concerns", "Concerns", "Any areas of improvement or red flags?"],
@@ -166,8 +176,9 @@ export function FeedbackForm({
             </label>
             <textarea
               name={name}
-              rows={2}
+              rows={draft ? 4 : 2}
               placeholder={placeholder}
+              defaultValue={draft ? draft[name as keyof Draft] : undefined}
               className="w-full rounded-lg border border-white/[0.08] bg-[#1a1a22] px-3 py-2.5 text-[13px] text-[#f0f0f5] placeholder-[#525367]"
             />
           </div>
