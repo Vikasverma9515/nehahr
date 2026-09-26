@@ -3,19 +3,21 @@
 import { useState, useTransition } from "react";
 import { Globe } from "lucide-react";
 import { setJobPublishing } from "@/app/actions/careers";
+import { useToast } from "@/app/components/ui/toast";
 
 export function PublishJobControl({ jobId, published, autoScreen, careersUrl }: {
   jobId: string; published: boolean; autoScreen: number | null; careersUrl: string | null;
 }) {
   const [on, setOn] = useState(published);
   const [threshold, setThreshold] = useState<string>(autoScreen != null ? String(autoScreen) : "");
-  const [msg, setMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   const save = (nextOn: boolean, nextThreshold: string) => startTransition(async () => {
     const t = nextThreshold.trim() === "" ? null : Math.max(0, Math.min(100, Number(nextThreshold)));
     const res = await setJobPublishing(jobId, nextOn, t);
-    setMsg(res.error || (nextOn ? "Published on your careers page" : "Hidden from the careers page"));
+    if (res.error) toast(res.error, "error");
+    else toast(nextOn ? "Published on your careers page" : "Hidden from the careers page");
   });
 
   return (
@@ -33,7 +35,6 @@ export function PublishJobControl({ jobId, published, autoScreen, careersUrl }: 
       {on && careersUrl && (
         <button onClick={() => navigator.clipboard?.writeText(careersUrl)} className="text-[12px] text-accent hover:underline">Copy job link</button>
       )}
-      {msg && <span className="text-[11px] text-dark-text-muted">{msg}</span>}
     </div>
   );
 }

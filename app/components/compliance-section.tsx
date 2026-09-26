@@ -3,13 +3,14 @@
 import { useState, useTransition } from "react";
 import { ShieldCheck } from "lucide-react";
 import { saveOrgPolicy, type OrgPolicy } from "@/app/actions/org-settings";
+import { useToast } from "@/app/components/ui/toast";
 
 const input = "mt-1 block w-full rounded-lg px-3 py-2 text-[12px]";
 
 export function ComplianceSection({ policy }: { policy: OrgPolicy }) {
   const [p, setP] = useState(policy);
-  const [msg, setMsg] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
   const hours = p.calling_hours;
 
   return (
@@ -36,12 +37,12 @@ export function ComplianceSection({ policy }: { policy: OrgPolicy }) {
           <input type="number" min={30} className={input} placeholder="Keep forever" value={p.retention_days ?? ""}
             onChange={(e) => setP({ ...p, retention_days: e.target.value ? Number(e.target.value) : null })} /></label>
       </div>
-      <div className="mt-4 flex items-center gap-3">
+      <div className="mt-4">
         <button disabled={pending} onClick={() => startTransition(async () => {
           const r = await saveOrgPolicy(p);
-          setMsg(r.error || "Saved");
+          if (r.error) toast(r.error, "error");
+          else toast("Settings saved");
         })} className="btn-primary rounded-xl px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50">Save</button>
-        {msg && <span className="text-[12px] text-dark-text-secondary">{msg}</span>}
       </div>
       <p className="mt-3 text-[11px] text-dark-text-muted">
         Deleting a candidate erases all their calls, interviews, messages and resume, and is recorded in the audit log.

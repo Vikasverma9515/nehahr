@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { FileSignature } from "lucide-react";
 import { createOffer, offerAction, updateOfferLetter, type OfferRow } from "@/app/actions/offers";
+import { useToast } from "@/app/components/ui/toast";
 
 const input = "block w-full rounded-lg px-3 py-2 text-[12px]";
 const STATUS: Record<string, string> = {
@@ -16,16 +17,16 @@ export function OfferCard({ candidateId, offers, defaultTitle, appUrl }: {
 }) {
   const [open, setOpen] = useState(false);
   const [f, setF] = useState({ designation: defaultTitle, fixed: 0, variable: 0, bonus: 0, joiningDate: "", location: "", reportingTo: "", expiresInDays: 5 });
-  const [msg, setMsg] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ id: string; html: string } | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const { toast } = useToast();
 
   const run = (fn: () => Promise<{ error?: string } | { success: boolean } | { offer: OfferRow }>) =>
     startTransition(async () => {
       const res = await fn();
-      if ("error" in res && res.error) setMsg(res.error);
-      else { setMsg(null); router.refresh(); }
+      if ("error" in res && res.error) toast(res.error, "error");
+      else router.refresh();
     });
 
   return (
@@ -111,7 +112,6 @@ export function OfferCard({ candidateId, offers, defaultTitle, appUrl }: {
           );
         })}
       </div>
-      {msg && <p className="mt-2 text-[12px] text-amber-400">{msg}</p>}
     </div>
   );
 }

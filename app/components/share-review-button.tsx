@@ -3,21 +3,23 @@
 import { useState, useTransition } from "react";
 import { Share2, X } from "lucide-react";
 import { createReviewLink } from "@/app/actions/reviews";
+import { useToast } from "@/app/components/ui/toast";
 
 export function ShareReviewButton({ jobId }: { jobId: string }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const [result, setResult] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   const share = () => startTransition(async () => {
     const res = await createReviewLink(jobId, name, email, message);
-    if ("error" in res && res.error) return setResult(res.error);
+    if ("error" in res && res.error) return toast(res.error, "error");
     if ("link" in res) {
       await navigator.clipboard?.writeText(res.link).catch(() => null);
-      setResult(`${res.count} candidates shared${res.emailed ? `, emailed to ${email}` : ""}. Link copied.`);
+      toast(`${res.count} candidates shared${res.emailed ? `, emailed to ${email}` : ""}. Link copied.`);
+      setOpen(false);
     }
   });
 
@@ -41,7 +43,6 @@ export function ShareReviewButton({ jobId }: { jobId: string }) {
       <button onClick={share} disabled={pending} className="btn-primary rounded-xl px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50">
         {pending ? "Sharing..." : "Create link"}
       </button>
-      {result && <p className="text-[12px] text-dark-text-secondary">{result}</p>}
     </div>
   );
 }
