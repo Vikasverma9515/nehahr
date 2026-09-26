@@ -65,9 +65,12 @@ def test_send_uses_whatsapp_and_logs(env):
 def test_template_used_for_purpose(env, monkeypatch):
     store, sent = env
     monkeypatch.setattr(settings, "twilio_wa_templates", '{"missed_call": "HX123"}')
+    import app.routers.portal as portal
+    monkeypatch.setattr(portal, "ensure_token", lambda cid: "tok123")
     messaging.missed_call("cand-1", "screening")
     assert sent[0]["content_sid"] == "HX123" and "body" not in sent[0]
     assert '"1": "Priya"' in sent[0]["content_variables"]
+    assert "/c/tok123" in sent[0]["content_variables"]
 
 
 def test_inbound_call_now_enqueues_a_call(env, monkeypatch):

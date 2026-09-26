@@ -15,7 +15,7 @@ if settings.sentry_dsn:
     import sentry_sdk
     sentry_sdk.init(dsn=settings.sentry_dsn, traces_sample_rate=0.1, send_default_pii=False)
 from app.services.tenancy import enforce_org_scope
-from app.routers import agent, ai_interviews, candidates, calls, jobs, webhooks, interviewers, auth, interviews, hr_sender
+from app.routers import agent, ai_interviews, candidates, portal, calls, jobs, webhooks, interviewers, auth, interviews, hr_sender
 
 
 @asynccontextmanager
@@ -67,6 +67,8 @@ app.include_router(agent.internal, prefix="/api/agent", tags=["agent-internal"])
 app.include_router(agent.router, prefix="/api/agent", tags=["agent"], dependencies=authed)
 app.include_router(ai_interviews.public_router, prefix="/api/ai-interviews", tags=["ai-interviews-public"])
 app.include_router(ai_interviews.router, prefix="/api/ai-interviews", tags=["ai-interviews"], dependencies=authed)
+app.include_router(portal.public_router, prefix="/api/portal/public", tags=["portal-public"])
+app.include_router(portal.router, prefix="/api/portal", tags=["portal"], dependencies=authed)
 app.include_router(hr_sender.router, prefix="/api/hr-sender", tags=["hr_sender"], dependencies=authed)
 
 @app.get("/health")

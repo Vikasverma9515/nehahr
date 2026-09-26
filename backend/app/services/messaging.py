@@ -120,9 +120,11 @@ def missed_call(candidate_id: str, call_type: str) -> None:
     job = (c.get("jobs") or {}).get("title") or "your application"
     what = {"screening": f"a quick chat about {job}", "scheduling": "your interview time",
             "reminder": "your interview today", "result": "your interview outcome"}.get(call_type, job)
+    from app.routers.portal import ensure_token, portal_link
+    link = portal_link(ensure_token(candidate_id))
     try_send(candidate_id, (
         f"Hi {first}, this is Neha from {company_name(c)}. I just tried calling you about {what}. "
-        "Reply CALL and I'll ring you right now, or tell me a better time."
+        f"Reply CALL and I'll ring you right now, or pick a time here: {link}"
     ), "missed_call")
 
 

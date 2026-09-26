@@ -36,6 +36,7 @@ import { PersonAvatar } from "@/app/components/person-avatar";
 import { AiInterviewCard, type AiInterviewRow } from "@/app/components/ai-interview-card";
 import { NehaMeetControl } from "@/app/components/neha-meet-control";
 import { MessagesCard, type MessageRow } from "@/app/components/messages-card";
+import { PortalLinkButton } from "@/app/components/portal-link-button";
 import type { NehaRole } from "@/app/actions/interviews";
 
 const SCORING_WEIGHTS: Record<string, number> = {
@@ -220,6 +221,7 @@ export default async function CandidateDetailPage({
               )}
             </>
           )}
+          <PortalLinkButton candidateId={candidate.id} />
           <DeleteCandidateButton candidateId={candidate.id} />
         </div>
       </div>
