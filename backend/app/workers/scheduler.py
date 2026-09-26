@@ -498,8 +498,16 @@ async def _check_meet_bots():
             enqueue("meet.launch", {"interview_id": iv["id"]}, dedupe_key=f"meet:{iv['id']}")
 
 
+async def _check_retention():
+    """Once a day, erase data past each org's retention period."""
+    from app.workers.queue import enqueue
+    day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    enqueue("retention.purge", dedupe_key=f"retention:{day}", max_attempts=1)
+
+
 async def run_checks():
     """One pass over every scheduled check."""
+    await _check_retention()
     await _check_meet_bots()
     await _check_reminders()
     await _check_result_calls()

@@ -110,6 +110,13 @@ async def run_once(limit: int = 10) -> int:
         ok, err = True, None
         try:
             await _dispatch(t["kind"], t.get("payload") or {})
+        except Deferred as d:
+            # Back to the queue at the allowed time; this attempt doesn't count.
+            await asyncio.to_thread(lambda: supabase.table("background_tasks").update({
+                "status": "queued", "run_at": d.run_at.isoformat(), "attempts": max(0, (t.get("attempts") or 1) - 1),
+                "locked_by": None, "locked_at": None, "last_error": f"deferred to {d.run_at.isoformat()}",
+            }).eq("id", t["id"]).execute())
+            continue
         except Exception as e:
             ok, err = False, f"{e}\n{traceback.format_exc(limit=5)}"
             log.error("task %s (%s) failed: %s", t["id"], t["kind"], e)
@@ -141,13 +148,34 @@ async def run_worker() -> None:
 
 # ── Built-in handlers ────────────────────────────────────────────────────
 
+class Deferred(Exception):
+    """Raised by a handler to push the task to a later time without counting a failure."""
+
+    def __init__(self, run_at: datetime):
+        self.run_at = run_at
+
+
 @task("call.initiate")
 def _initiate_call(payload: dict):
+    from app.services import compliance, db as _db
     from app.services.call_service import call_service
+
+    # Automated calls only inside the org's calling hours.
+    cand = _db.get_supabase().table("candidates").select("org_id").eq(
+        "id", payload["candidate_id"]).single().execute().data or {}
+    later = compliance.next_call_time(compliance.calling_hours(cand.get("org_id")))
+    if later and not payload.get("ignore_calling_hours"):
+        raise Deferred(later)
     return call_service.initiate_call(
         candidate_id=payload["candidate_id"],
         call_type=payload.get("call_type", "screening"),
     )
+
+
+@task("retention.purge")
+def _retention_purge(payload: dict):
+    from app.services import compliance
+    return compliance.purge_expired()
 
 
 @task("meet.launch")

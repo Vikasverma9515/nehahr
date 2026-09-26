@@ -326,8 +326,21 @@ def for_call(ctx: dict) -> str:
     return builders.get(call_type, screening)(ctx)
 
 
+RECORDING_NOTICE = " Just so you know, this call is recorded for the hiring team."
+
+
 def greeting(ctx: dict) -> str:
-    """First line, spoken before the model runs so the call starts instantly."""
+    """First line, spoken before the model runs so the call starts instantly.
+
+    Every call opens by saying Neha is an AI and the call is recorded.
+    """
+    line = _greeting(ctx)
+    if (ctx.get("call") or {}).get("call_type") in ("inbound",) or (ctx.get("call") or {}).get("channel") == "meet":
+        return line + (RECORDING_NOTICE if (ctx.get("call") or {}).get("channel") != "meet" else "")
+    return line + RECORDING_NOTICE
+
+
+def _greeting(ctx: dict) -> str:
     w = _who(ctx)
     call_type = (ctx.get("call") or {}).get("call_type", "screening")
     if call_type in ("reminder", "reminder_candidate"):
