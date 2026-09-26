@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Calendar, Check, Plus, Trash2, X } from "lucide-react";
-import { createInterviewer, deleteInterviewer } from "@/app/actions/interviewers";
+import { createInterviewer, deleteInterviewer, getConnectGoogleUrl } from "@/app/actions/interviewers";
 import { useRouter } from "next/navigation";
 import { PersonAvatar } from "@/app/components/person-avatar";
 
@@ -16,8 +16,6 @@ type Interviewer = {
   is_active: boolean;
   google_connected_at: string | null;
 };
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export function InterviewersSection({ interviewers }: { interviewers: Interviewer[] }) {
   const [showForm, setShowForm] = useState(false);
@@ -46,9 +44,9 @@ export function InterviewersSection({ interviewers }: { interviewers: Interviewe
     });
   }
 
-  function handleConnectCalendar(interviewerId: string) {
-    // Redirect the user to the backend OAuth start endpoint
-    window.location.href = `${BACKEND_URL}/api/auth/google/start?interviewer_id=${interviewerId}`;
+  async function handleConnectCalendar(interviewerId: string) {
+    // The backend only accepts OAuth start links signed by the dashboard.
+    window.location.assign(await getConnectGoogleUrl(interviewerId));
   }
 
   return (

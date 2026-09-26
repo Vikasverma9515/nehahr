@@ -1,10 +1,11 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from app.security import require_user
 from app.routers import candidates, calls, jobs, webhooks, interviewers, auth, interviews, hr_sender
 
 
@@ -35,15 +36,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(candidates.router, prefix="/api/candidates", tags=["candidates"])
-app.include_router(calls.router, prefix="/api/calls", tags=["calls"])
-app.include_router(jobs.router, prefix="/api/jobs", tags=["jobs"])
-app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
-app.include_router(interviewers.router, prefix="/api/interviewers", tags=["interviewers"])
-app.include_router(interviews.router, prefix="/api/interviews", tags=["interviews"])
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(hr_sender.router, prefix="/api/hr-sender", tags=["hr_sender"])
+authed = [Depends(require_user)]
 
+app.include_router(candidates.router, prefix="/api/candidates", tags=["candidates"], dependencies=authed)
+app.include_router(calls.public_router, prefix="/api/calls", tags=["calls"])
+app.include_router(calls.router, prefix="/api/calls", tags=["calls"], dependencies=authed)
+app.include_router(jobs.router, prefix="/api/jobs", tags=["jobs"], dependencies=authed)
+app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
+app.include_router(interviewers.router, prefix="/api/interviewers", tags=["interviewers"], dependencies=authed)
+app.include_router(interviews.public_router, prefix="/api/interviews", tags=["feedback"])
+app.include_router(interviews.router, prefix="/api/interviews", tags=["interviews"], dependencies=authed)
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+app.include_router(hr_sender.router, prefix="/api/hr-sender", tags=["hr_sender"], dependencies=authed)
 
 @app.get("/health")
 async def health():

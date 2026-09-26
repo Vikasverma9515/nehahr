@@ -2,8 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/app/lib/supabase/server";
-
-const BACKEND_URL = process.env.BACKEND_API_URL || process.env.BACKEND_URL || "http://localhost:8000";
+import { signedBackendUrl } from "@/app/lib/backend";
 
 export async function listInterviewers() {
   const supabase = await createClient();
@@ -41,5 +40,5 @@ export async function deleteInterviewer(id: string) {
 
 export async function getConnectGoogleUrl(interviewerId: string) {
   // Redirect user to backend OAuth start endpoint, which will bounce them to Google
-  return `${BACKEND_URL}/api/auth/google/start?interviewer_id=${interviewerId}`;
+  return signedBackendUrl("/api/auth/google/start", 600, { interviewer_id: interviewerId });
 }

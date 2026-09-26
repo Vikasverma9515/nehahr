@@ -2,16 +2,17 @@
 
 import json
 import traceback
-from fastapi import APIRouter, Request, WebSocket, Query
+from fastapi import APIRouter, Depends, Request, WebSocket, Query
 from fastapi.responses import Response
 
 from app.config import settings
 from app.services import db
+from app.security import verify_twilio_request, stream_token, verify_value
 
 router = APIRouter()
 
 
-@router.post("/twilio/voice")
+@router.post("/twilio/voice", dependencies=[Depends(verify_twilio_request)])
 async def twilio_voice_webhook(
     request: Request,
     call_id: str = Query(...),
@@ -37,6 +38,7 @@ async def twilio_voice_webhook(
             <Parameter name="call_id" value="{call_id}" />
             <Parameter name="call_type" value="{call_type}" />
             <Parameter name="candidate_id" value="{candidate_id}" />
+            <Parameter name="token" value="{stream_token(call_id)}" />
         </Stream>
     </Connect>
 </Response>"""
@@ -74,6 +76,13 @@ async def twilio_media_stream(websocket: WebSocket, call_id: str):
                 custom_params = message.get("start", {}).get("customParameters", {})
                 candidate_id = custom_params.get("candidate_id", "")
                 call_type = custom_params.get("call_type", "screening")
+                # Only streams opened from our own signed TwiML may run a call.
+                if not settings.disable_auth and not verify_value(
+                    f"stream:{call_id}", custom_params.get("token")
+                ):
+                    print(f"[STREAM] Rejected stream for {call_id}: bad token")
+                    await websocket.close(code=1008)
+                    return
                 print(f"[STREAM] Start event: candidate_id={candidate_id}, call_type={call_type}")
 
                 # If no candidate_id in params, look it up from the call record
@@ -138,7 +147,7 @@ async def twilio_media_stream(websocket: WebSocket, call_id: str):
         print(f"[STREAM] WebSocket closed for call {call_id}")
 
 
-@router.post("/twilio/status")
+@router.post("/twilio/status", dependencies=[Depends(verify_twilio_request)])
 async def twilio_status_webhook(request: Request):
     """Called by Twilio with call status updates."""
     form = await request.form()
@@ -211,7 +220,7 @@ async def twilio_status_webhook(request: Request):
     return Response(content="<Response/>", media_type="application/xml")
 
 
-@router.post("/twilio/recording")
+@router.post("/twilio/recording", dependencies=[Depends(verify_twilio_request)])
 async def twilio_recording_webhook(request: Request):
     """Called by Twilio when a call recording is ready."""
     form = await request.form()

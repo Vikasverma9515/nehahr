@@ -1,11 +1,11 @@
 "use server";
 
+import { backendFetch } from "@/app/lib/backend";
+
 import { revalidatePath } from "next/cache";
 
-const BACKEND_URL = process.env.BACKEND_API_URL || "http://localhost:8000";
-
 export async function markInterviewCompleted(interviewId: string) {
-  const res = await fetch(`${BACKEND_URL}/api/interviews/${interviewId}/complete`, {
+  const res = await backendFetch(`/api/interviews/${interviewId}/complete`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
   });
@@ -32,7 +32,7 @@ export type FeedbackData = {
 };
 
 export async function triggerReminderCall(candidateId: string) {
-  const res = await fetch(`${BACKEND_URL}/api/calls/initiate`, {
+  const res = await backendFetch(`/api/calls/initiate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ candidate_id: candidateId, call_type: "reminder" }),
@@ -46,7 +46,7 @@ export async function triggerReminderCall(candidateId: string) {
 }
 
 export async function triggerResultCall(candidateId: string) {
-  const res = await fetch(`${BACKEND_URL}/api/calls/initiate`, {
+  const res = await backendFetch(`/api/calls/initiate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ candidate_id: candidateId, call_type: "result" }),
@@ -72,9 +72,8 @@ export async function getEmailTemplate(
   asResult?: "pass" | "hold" | "fail"
 ): Promise<EmailTemplate | null> {
   try {
-    const url = new URL(`${BACKEND_URL}/api/interviews/${interviewId}/email-template`);
-    if (asResult) url.searchParams.set("as", asResult);
-    const res = await fetch(url.toString(), { cache: "no-store" });
+    const qs = asResult ? `?as=${asResult}` : "";
+    const res = await backendFetch(`/api/interviews/${interviewId}/email-template${qs}`);
     if (!res.ok) return null;
     return (await res.json()) as EmailTemplate;
   } catch {
@@ -86,7 +85,7 @@ export async function sendResultEmail(
   interviewId: string,
   data: { to_email: string; subject: string; body: string }
 ) {
-  const res = await fetch(`${BACKEND_URL}/api/interviews/${interviewId}/send-email`, {
+  const res = await backendFetch(`/api/interviews/${interviewId}/send-email`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -104,7 +103,7 @@ export async function cancelInterview(
   interviewId: string,
   opts: { reason?: string; reschedule?: boolean } = {}
 ) {
-  const res = await fetch(`${BACKEND_URL}/api/interviews/${interviewId}/cancel`, {
+  const res = await backendFetch(`/api/interviews/${interviewId}/cancel`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -124,7 +123,7 @@ export async function cancelInterview(
 }
 
 export async function submitFeedback(interviewId: string, data: FeedbackData) {
-  const res = await fetch(`${BACKEND_URL}/api/interviews/${interviewId}/feedback`, {
+  const res = await backendFetch(`/api/interviews/${interviewId}/feedback`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),

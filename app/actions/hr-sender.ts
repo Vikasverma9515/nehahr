@@ -1,15 +1,8 @@
 "use server";
 
+import { backendFetch, signedBackendUrl } from "@/app/lib/backend";
+
 import { revalidatePath } from "next/cache";
-
-// Server-to-backend calls go through loopback to avoid the corporate
-// firewall blocking ngrok. Matches the pattern in schedule.ts and calls.ts.
-const BACKEND_URL = process.env.BACKEND_API_URL || "http://localhost:8000";
-
-// Public backend URL (ngrok) is still needed for the Google OAuth redirect,
-// because the user's browser follows the link out to Google and back.
-const PUBLIC_BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export type HrSenderStatus = {
   connected: boolean;
@@ -20,7 +13,7 @@ export type HrSenderStatus = {
 
 export async function getHrSenderStatus(): Promise<HrSenderStatus> {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/hr-sender/`, {
+    const res = await backendFetch(`/api/hr-sender/`, {
       method: "GET",
       cache: "no-store",
     });
@@ -33,7 +26,7 @@ export async function getHrSenderStatus(): Promise<HrSenderStatus> {
 
 export async function disconnectHrSender() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/hr-sender/`, {
+    const res = await backendFetch(`/api/hr-sender/`, {
       method: "DELETE",
     });
     if (!res.ok) {
@@ -50,5 +43,5 @@ export async function disconnectHrSender() {
 export async function getConnectHrSenderUrl() {
   // The user's browser is about to navigate here and then get bounced to
   // Google — so this URL must be publicly reachable, not localhost.
-  return `${PUBLIC_BACKEND_URL}/api/auth/google/start-hr`;
+  return signedBackendUrl("/api/auth/google/start-hr", 600);
 }

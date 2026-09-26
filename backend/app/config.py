@@ -32,6 +32,19 @@ class Settings(BaseSettings):
     hr_reply_to: str = ""  # optional: reply-to for booking emails (e.g. recruiting@example.com)
     hr_company_name: str = "Our Company"
 
+    # Security
+    # SUPABASE_JWT_SECRET: only for projects on the legacy HS256 secret; newer
+    # projects are verified against the project's JWKS automatically.
+    supabase_jwt_secret: str = ""
+    # Shared with the dashboard; signs browser links (recordings, OAuth start).
+    app_secret: str = ""
+    # Our own workers (voice agent, Meet bot) send this as X-Internal-Key.
+    internal_api_key: str = ""
+    # Dev only: accept every request without a session. Never in production.
+    disable_auth: bool = False
+    # Dev only: skip Twilio signature checks (e.g. behind a rewriting tunnel).
+    skip_twilio_signature: bool = False
+
     model_config = {"env_file": "../.env", "extra": "ignore"}
 
 

@@ -3,19 +3,16 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Mail, Trash2 } from "lucide-react";
-import { disconnectHrSender, type HrSenderStatus } from "@/app/actions/hr-sender";
-
-const PUBLIC_BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+import { disconnectHrSender, getConnectHrSenderUrl, type HrSenderStatus } from "@/app/actions/hr-sender";
 
 export function HrSenderSection({ status }: { status: HrSenderStatus }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  function handleConnect() {
-    // Browser navigates to the backend OAuth start endpoint, which redirects
+  async function handleConnect() {
+    // Browser navigates to a signed backend OAuth start link, which redirects
     // to Google's consent screen, then back to our callback.
-    window.location.href = `${PUBLIC_BACKEND_URL}/api/auth/google/start-hr`;
+    window.location.assign(await getConnectHrSenderUrl());
   }
 
   function handleDisconnect() {

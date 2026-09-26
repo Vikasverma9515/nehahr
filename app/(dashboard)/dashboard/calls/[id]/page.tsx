@@ -1,3 +1,4 @@
+import { signedBackendUrl } from "@/app/lib/backend";
 import { createClient } from "@/app/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/app/components/ui/page-header";
@@ -25,7 +26,7 @@ export default async function CallDetailPage({ params }: { params: Promise<{ id:
         <div className="space-y-6 lg:col-span-2">
           {call.recording_url && (
             <Card><h2 className="mb-4 text-[13px] font-normal uppercase tracking-[0.1em] text-dark-text-secondary">Recording</h2>
-              <audio controls className="w-full" src={`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"}/api/calls/${id}/recording`}>Your browser does not support audio.</audio>
+              <audio controls className="w-full" src={signedBackendUrl(`/api/calls/${id}/recording`, 6 * 3600)}>Your browser does not support audio.</audio>
             </Card>
           )}
           <Card>

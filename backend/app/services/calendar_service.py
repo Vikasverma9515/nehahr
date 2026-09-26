@@ -43,6 +43,21 @@ GMAIL_SEND_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
 # OAuth flow
 # ============================================================
 
+def signed_state(value: str) -> str:
+    """OAuth state = value + HMAC, so the callback can trust which record to update."""
+    from app.security import sign_value
+    return f"{value}.{sign_value('oauth:' + value)}"
+
+
+def verify_state(state: str) -> str | None:
+    """Return the value inside a signed state, or None if it was tampered with."""
+    from app.security import verify_value
+    value, _, sig = state.rpartition(".")
+    if value and verify_value("oauth:" + value, sig):
+        return value
+    return None
+
+
 def build_auth_url(interviewer_id: str) -> str:
     """Build the Google consent URL. State param carries the interviewer_id so
     we know who to save the tokens for in the callback."""
@@ -53,7 +68,7 @@ def build_auth_url(interviewer_id: str) -> str:
         "scope": GOOGLE_SCOPES,
         "access_type": "offline",
         "prompt": "consent",
-        "state": interviewer_id,
+        "state": signed_state(interviewer_id),
     }
     return f"{GOOGLE_AUTH_URL}?{urlencode(params)}"
 
@@ -72,7 +87,7 @@ def build_hr_auth_url() -> str:
         "scope": GOOGLE_SCOPES,
         "access_type": "offline",
         "prompt": "consent",
-        "state": "hr:sender",
+        "state": signed_state("hr:sender"),
     }
     return f"{GOOGLE_AUTH_URL}?{urlencode(params)}"
 

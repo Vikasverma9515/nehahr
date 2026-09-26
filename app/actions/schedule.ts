@@ -1,21 +1,16 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { backendFetch } from "@/app/lib/backend";
 
-// Server actions run in the same process as Next.js on the dev machine, so
-// we always hit the backend over loopback. The public BACKEND_URL (ngrok) is
-// only needed for Twilio webhooks — not for internal server-to-backend calls.
-// Corporate firewalls (FortiGuard) block ngrok as "Proxy Avoidance", so going
-// through localhost avoids the firewall entirely.
-const BACKEND_URL = process.env.BACKEND_API_URL || "http://localhost:8000";
+import { revalidatePath } from "next/cache";
 
 export async function previewSlots(candidateId: string, interviewerId?: string) {
   const params = new URLSearchParams({ candidate_id: candidateId });
   if (interviewerId) params.set("interviewer_id", interviewerId);
 
-  const url = `${BACKEND_URL}/api/interviews/slots/preview?${params}`;
+  const url = `/api/interviews/slots/preview?${params}`;
   try {
-    const res = await fetch(url, { method: "GET", cache: "no-store" });
+    const res = await backendFetch(url, { method: "GET", cache: "no-store" });
 
     if (!res.ok) {
       // Try JSON first; if that fails, fall back to the raw text body so we
@@ -47,7 +42,7 @@ export async function previewSlots(candidateId: string, interviewerId?: string) 
 
 export async function listInterviewers() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/interviewers/`, { cache: "no-store" });
+    const res = await backendFetch(`/api/interviewers/`, { cache: "no-store" });
     if (!res.ok) return [];
     const data = await res.json();
     return (data.interviewers || data || []) as { id: string; name: string; email: string }[];
@@ -63,9 +58,9 @@ export async function triggerSchedulingCall(
   interviewType?: string,
   durationMinutes?: number,
 ) {
-  const url = `${BACKEND_URL}/api/interviews/trigger-scheduling-call`;
+  const url = `/api/interviews/trigger-scheduling-call`;
   try {
-    const res = await fetch(url, {
+    const res = await backendFetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
