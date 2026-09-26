@@ -4,6 +4,7 @@ import { Sidebar } from "@/app/components/sidebar";
 import { CommandPalette } from "@/app/components/command-palette";
 import { CairnCopilot } from "@/components/CairnCopilot";
 import { getSidebarBadges } from "@/app/components/sidebar-badges";
+import { Providers } from "@/app/components/providers";
 
 export default async function DashboardLayout({
   children,
@@ -23,18 +24,20 @@ export default async function DashboardLayout({
   const badges = await getSidebarBadges();
 
   return (
-    <div className="flex h-screen bg-dark-bg">
-      <Sidebar
-        userName={profile?.full_name || user?.email || "Dev User"}
-        userEmail={user?.email || undefined}
-        badges={badges}
-      />
-      <main className="flex-1 overflow-auto">
-        <div className="mx-auto max-w-7xl px-6 py-8">{children}</div>
-      </main>
-      {/* The Cairn assistant lives inside the app only: this layout redirects to /login first. */}
-      <CommandPalette />
-      <CairnCopilot />
-    </div>
+    <Providers>
+      <div className="flex h-screen bg-dark-bg">
+        <Sidebar
+          userName={profile?.full_name || user?.email || "Dev User"}
+          userEmail={user?.email || undefined}
+          badges={badges}
+        />
+        <main className="flex-1 overflow-auto">
+          <div className="mx-auto max-w-7xl px-6 py-8">{children}</div>
+        </main>
+        {/* The Cairn assistant lives inside the app only: this layout redirects to /login first. */}
+        <CommandPalette />
+        <CairnCopilot />
+      </div>
+    </Providers>
   );
 }

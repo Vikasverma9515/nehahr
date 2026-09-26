@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { CheckSquare, Square, Phone, UserX, Download, Loader2, X } from "lucide-react";
 import { PersonAvatar } from "@/app/components/person-avatar";
+import { useToast } from "@/app/components/ui/toast";
 import Link from "next/link";
 
 type Candidate = {
@@ -30,7 +31,7 @@ const ACTION_LABELS: Record<Action, string> = {
 export function BulkCandidateList({ candidates }: { candidates: Candidate[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
-  const [result, setResult] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const allSelected = candidates.length > 0 && selected.size === candidates.length;
 
@@ -72,10 +73,10 @@ export function BulkCandidateList({ candidates }: { candidates: Candidate[] }) {
           body: JSON.stringify({ ids, action }),
         });
         const data = await res.json();
-        setResult(data.message || `Done: ${data.count ?? ids.length} updated`);
+        toast(data.message || `Done: ${data.count ?? ids.length} updated`);
         setSelected(new Set());
       } catch {
-        setResult("Something went wrong");
+        toast("Something went wrong", "error");
       }
     });
   }
@@ -118,13 +119,6 @@ export function BulkCandidateList({ candidates }: { candidates: Candidate[] }) {
           <button onClick={() => setSelected(new Set())} className="ml-auto text-dark-text-muted hover:text-dark-text">
             <X className="h-3.5 w-3.5" />
           </button>
-        </div>
-      )}
-
-      {result && (
-        <div className="mb-3 flex items-center justify-between rounded-xl border border-[#7dd4a8]/20 bg-[#7dd4a8]/05 px-4 py-2.5">
-          <span className="text-[13px] text-[#7dd4a8]">{result}</span>
-          <button onClick={() => setResult(null)}><X className="h-3.5 w-3.5 text-dark-text-muted" /></button>
         </div>
       )}
 
