@@ -24,6 +24,7 @@ const NAV: Hit[] = [
   { id: "nav-jobs", type: "nav", label: "Jobs", sub: "Open positions", href: "/dashboard/jobs", badge: "⌘3" },
   { id: "nav-interviews", type: "nav", label: "Interviews", sub: "Scheduled interviews", href: "/dashboard/interviews" },
   { id: "nav-calls", type: "nav", label: "Calls", sub: "Call history", href: "/dashboard/calls" },
+  { id: "nav-ai-interviews", type: "nav", label: "AI Interviews", sub: "Video interviews by Neha", href: "/dashboard/ai-interviews" },
   { id: "nav-playground", type: "nav", label: "Playground", sub: "Talk to Neha", href: "/dashboard/playground" },
   { id: "nav-analytics", type: "nav", label: "Analytics", sub: "Hiring insights", href: "/dashboard/analytics" },
   { id: "nav-helpdesk", type: "nav", label: "Helpdesk", sub: "Candidate requests", href: "/dashboard/helpdesk" },
@@ -60,12 +61,26 @@ export function CommandPalette() {
 
   // Open with Cmd+K
   useEffect(() => {
+    const shortcuts: Record<string, string> = {
+      "1": "/dashboard",
+      "2": "/dashboard/candidates",
+      "3": "/dashboard/jobs",
+    };
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setOpen((o) => !o);
+        return;
       }
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") { setOpen(false); return; }
+      // ⌘1/⌘2/⌘3 quick-nav (only when not typing in an input)
+      if ((e.metaKey || e.ctrlKey) && shortcuts[e.key]) {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (!["INPUT", "TEXTAREA", "SELECT"].includes(tag)) {
+          e.preventDefault();
+          window.location.href = shortcuts[e.key];
+        }
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
