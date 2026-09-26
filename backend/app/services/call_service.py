@@ -28,10 +28,8 @@ class CallService:
         if not candidate:
             raise ValueError(f"Candidate {candidate_id} not found")
 
-        to_number = candidate["phone"]
-        # Ensure E.164 format (+91 for India)
-        if not to_number.startswith("+"):
-            to_number = f"+91{to_number.lstrip('0')}"
+        from app.services.phone import to_e164
+        to_number = to_e164(candidate["phone"])
 
         # Create DB record first
         call_record = db.create_call_record(

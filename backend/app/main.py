@@ -1,10 +1,19 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+
+logging.basicConfig(
+    level=settings.log_level.upper(),
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+if settings.sentry_dsn:
+    import sentry_sdk
+    sentry_sdk.init(dsn=settings.sentry_dsn, traces_sample_rate=0.1, send_default_pii=False)
 from app.services.tenancy import enforce_org_scope
 from app.routers import candidates, calls, jobs, webhooks, interviewers, auth, interviews, hr_sender
 
@@ -14,9 +23,15 @@ async def lifespan(app: FastAPI):
     print("Neha HR backend starting...")
     # Start background scheduler for auto-reminders and result calls
     from app.workers.scheduler import run_scheduler
-    scheduler_task = asyncio.create_task(run_scheduler())
+    from app.workers.queue import run_worker
+    background = [asyncio.create_task(run_scheduler())]
+    # RUN_QUEUE_WORKER=false lets a separate `python -m app.workers.queue`
+    # process own the work instead of the web process.
+    if settings.run_queue_worker:
+        background.append(asyncio.create_task(run_worker()))
     yield
-    scheduler_task.cancel()
+    for t in background:
+        t.cancel()
     print("Neha HR backend shutting down...")
 
 

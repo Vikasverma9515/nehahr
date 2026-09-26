@@ -5,7 +5,7 @@ Wakes up every 5 minutes and checks for:
 2. Interviews with submitted feedback: auto-trigger result call
 3. Feedback overdue (>2h after interview marked complete): nudge interviewer
 
-No external dependency — uses plain asyncio.sleep in a background task.
+Ticks are queued as durable background tasks (see app/workers/queue.py).
 """
 
 import asyncio
@@ -479,15 +479,28 @@ async def _check_pre_joining():
                     print(f"[SCHEDULER] Dropout check failed: {e}")
 
 
+async def run_checks():
+    """One pass over every scheduled check."""
+    await _check_reminders()
+    await _check_result_calls()
+    await _check_overdue_feedback()
+    await _check_pre_joining()
+
+
 async def run_scheduler():
-    """Main scheduler loop. Runs forever inside the FastAPI process."""
+    """Enqueue one scheduler tick per interval.
+
+    Every replica runs this loop, but the dedupe key (one per 5-minute slot)
+    means only the first replica's tick is queued, so reminders and result
+    calls fire once. The queue worker then runs the checks.
+    """
+    from app.workers.queue import enqueue
+
     print("[SCHEDULER] Background scheduler started (interval: 5 min)")
     while True:
+        slot = int(datetime.now(timezone.utc).timestamp() // INTERVAL_SECONDS)
         try:
-            await _check_reminders()
-            await _check_result_calls()
-            await _check_overdue_feedback()
-            await _check_pre_joining()
+            enqueue("scheduler.tick", dedupe_key=f"scheduler.tick:{slot}", max_attempts=1)
         except Exception as e:
-            print(f"[SCHEDULER] Tick error: {e}")
+            print(f"[SCHEDULER] Could not enqueue tick: {e}")
         await asyncio.sleep(INTERVAL_SECONDS)

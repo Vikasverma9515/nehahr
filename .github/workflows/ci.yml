@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit -p .
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      SUPABASE_URL: https://ci.supabase.co
+      SUPABASE_SERVICE_KEY: ci
+      TWILIO_ACCOUNT_SID: ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      TWILIO_AUTH_TOKEN: ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -e . pytest
+      - name: Unit tests (offline)
+        # tests/test_system.py calls live Bedrock/Supabase; run it locally with keys.
+        run: pytest tests -q --ignore=tests/test_system.py
+
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply all migrations on a Supabase-like stub
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/auth_stub.sql
+          for f in supabase/migrations/*.sql; do
+            echo "== $f"; psql -q -v ON_ERROR_STOP=1 -f "$f" || exit 1
+          done
+      - name: Tenant isolation checks
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/rls_test.sql
