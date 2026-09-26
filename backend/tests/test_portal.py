@@ -52,7 +52,8 @@ def test_call_me_now_queues(client, monkeypatch):
     queued = []
     monkeypatch.setattr(q, "enqueue", lambda kind, payload, **k: queued.append((kind, payload, k)) or "t1")
     r = client.post("/api/portal/public/tok/call-me", json={})
-    assert r.status_code == 200 and queued[0][1] == {"candidate_id": "cand-1", "call_type": "screening"}
+    assert r.status_code == 200
+    assert queued[0][1] == {"candidate_id": "cand-1", "call_type": "screening", "ignore_calling_hours": True}
 
 
 def test_link_requires_sign_in(client):

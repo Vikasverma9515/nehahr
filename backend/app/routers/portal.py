@@ -195,7 +195,8 @@ async def call_me(token: str, body: CallMeRequest):
                  "scheduling": "scheduling"}.get(c.get("stage") or "new", "screening")
     from app.workers.queue import enqueue
     slot = int(datetime.now(timezone.utc).timestamp() // 600)
-    queued = enqueue("call.initiate", {"candidate_id": c["id"], "call_type": call_type},
+    # The candidate asked for this call, so calling hours don't apply.
+    queued = enqueue("call.initiate", {"candidate_id": c["id"], "call_type": call_type, "ignore_calling_hours": True},
                      delay_seconds=max(15.0, delay), dedupe_key=f"portal-call:{c['id']}:{slot}")
     return {"ok": True, "queued": queued is not None,
             "at": (datetime.now(timezone.utc) + timedelta(seconds=max(15.0, delay))).isoformat()}
