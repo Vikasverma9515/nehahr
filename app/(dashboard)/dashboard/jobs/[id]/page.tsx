@@ -6,6 +6,8 @@ import { JobInterviewerPicker } from "@/app/components/job-interviewer-picker";
 import { MapPin, Users, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { PersonAvatar } from "@/app/components/person-avatar";
+import { ScreeningBuilder } from "@/app/components/screening-builder";
+import type { ScreeningConfig } from "@/app/actions/screening";
 
 const STAGE_ORDER = [
   "new", "screening", "screened", "shortlisted", "scheduling", "scheduled",
@@ -104,6 +106,11 @@ export default async function JobDetailPage({
           </div>
         ))}
       </div>
+
+      {/* ── Screening setup ────────────────────────────────────── */}
+      <Card>
+        <ScreeningBuilder jobId={job.id} initial={(job.screening_config || null) as ScreeningConfig | null} />
+      </Card>
 
       {/* ── Interviewer picker ─────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.08] bg-white/[0.02] px-5 py-3">

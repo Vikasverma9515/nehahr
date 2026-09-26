@@ -78,7 +78,7 @@ def get_call_by_sid(twilio_call_sid: str) -> dict | None:
 def get_candidate(candidate_id: str) -> dict | None:
     """Get a candidate by ID."""
     supabase = get_supabase()
-    result = supabase.table("candidates").select("*, jobs(title, role_type, required_skills, work_model)").eq("id", candidate_id).single().execute()
+    result = supabase.table("candidates").select("*, jobs(title, role_type, required_skills, work_model, location, salary_range_min, salary_range_max, job_description, screening_config)").eq("id", candidate_id).single().execute()
     return result.data
 
 
