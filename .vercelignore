@@ -2,5 +2,5 @@
 backend/
 voice_agent/
 meet_bot/
-supabase/
+/supabase/
 docs/
