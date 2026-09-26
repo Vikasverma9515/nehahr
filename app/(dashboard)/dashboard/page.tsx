@@ -26,6 +26,7 @@ import { SendEmailButton } from "@/app/components/send-email-button";
 import { CallTriggerButton } from "@/app/components/call-trigger-button";
 import { ShortlistButton, RejectButton } from "@/app/components/stage-actions";
 import { PersonAvatar } from "@/app/components/person-avatar";
+import { NeedsYou } from "@/app/components/needs-you";
 
 const PIPELINE_STAGES = [
   "new", "screening", "screened", "shortlisted", "scheduling",
@@ -121,6 +122,9 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Requests, finished AI interviews, at-risk joiners, bot failures ── */}
+      <NeedsYou />
 
       {/* ── Live counter bar ─────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
