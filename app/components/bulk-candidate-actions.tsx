@@ -1,15 +1,20 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckSquare, Square, Phone, UserX, Download, ChevronDown, Loader2, X } from "lucide-react";
+import { CheckSquare, Square, Phone, UserX, Download, Loader2, X } from "lucide-react";
 import { PersonAvatar } from "@/app/components/person-avatar";
 import Link from "next/link";
 
 type Candidate = {
   id: string;
   name: string;
+  email?: string | null;
+  phone?: string | null;
   stage: string;
   score: number | null;
+  qualification_status?: string | null;
+  needs_manual_scheduling?: boolean;
+  scheduling_notes?: string | null;
   jobs: { title: string } | null;
 };
 
@@ -140,6 +145,7 @@ export function BulkCandidateList({ candidates }: { candidates: Candidate[] }) {
         {candidates.map((c) => {
           const job = c.jobs as any;
           const isSelected = selected.has(c.id);
+          const hint = getHint(c);
           return (
             <div
               key={c.id}
@@ -171,10 +177,20 @@ export function BulkCandidateList({ candidates }: { candidates: Candidate[] }) {
 
               <PersonAvatar name={c.name} size={36} className="hidden sm:block" />
 
-              <Link href={`/dashboard/candidates/${c.id}`} className="min-w-0 flex-1 hover:underline">
-                <p className="text-[13px] font-semibold text-dark-text">{c.name}</p>
-                <p className="text-[11px] text-dark-text-muted">{job?.title || "No role"} · {c.stage}</p>
+              <Link href={`/dashboard/candidates/${c.id}`} className="min-w-0 flex-1">
+                <p className="text-[13px] font-semibold text-dark-text hover:underline">{c.name}</p>
+                <p className="text-[11px] text-dark-text-muted">
+                  {job?.title || "No role"}
+                  {hint && <span className="text-dark-text-secondary"> · {hint}</span>}
+                </p>
               </Link>
+
+              {(c.email || c.phone) && (
+                <div className="hidden shrink-0 flex-col items-end gap-0.5 lg:flex">
+                  {c.email && <span className="text-[10px] text-dark-text-muted truncate max-w-[140px]">{c.email}</span>}
+                  {c.phone && <span className="text-[10px] text-dark-text-muted">{c.phone}</span>}
+                </div>
+              )}
 
               <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium ${stageColor(c.stage)}`}>
                 {c.stage}
@@ -185,6 +201,20 @@ export function BulkCandidateList({ candidates }: { candidates: Candidate[] }) {
       </div>
     </div>
   );
+}
+
+function getHint(c: Candidate): string {
+  if (c.stage === "screened" && c.qualification_status === "qualified") return "Ready to shortlist";
+  if (c.needs_manual_scheduling) return c.scheduling_notes || "Needs manual scheduling";
+  if (c.stage === "new") return "Awaiting screening";
+  if (c.stage === "screening") return "Neha is screening";
+  if (c.stage === "scheduling") return "Neha is scheduling";
+  if (c.stage === "scheduled") return "Interview upcoming";
+  if (c.stage === "interviewing") return "Awaiting feedback";
+  if (c.stage === "offer") return "Offer stage";
+  if (c.stage === "joined") return "Joined";
+  if (c.stage === "rejected") return "Rejected";
+  return "";
 }
 
 function stageColor(stage: string): string {
