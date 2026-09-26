@@ -13,10 +13,10 @@ export async function getTeam() {
     supabase.rpc("current_org_id"),
   ]);
   const { data: org } = orgId
-    ? await supabase.from("organizations").select("id, name").eq("id", orgId).single()
+    ? await supabase.from("organizations").select("id, name, slug").eq("id", orgId).single()
     : { data: null };
   return {
-    org: org as { id: string; name: string } | null,
+    org: org as { id: string; name: string; slug?: string | null } | null,
     members: (members || []) as { user_id: string; email: string; full_name: string | null; role: TeamRole }[],
     invites: (invites || []) as { id: string; email: string; role: TeamRole }[],
   };
