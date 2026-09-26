@@ -11,7 +11,7 @@ from __future__ import annotations
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.config import settings
@@ -107,6 +107,7 @@ async def portal(token: str):
         "next_interview": upcoming[0] if upcoming else None,
         "ai_interview_link": f"/interview/{ai[0]['token']}" if ai else None,
         "can_self_schedule": _can_self_schedule(c),
+        "documents": _documents(c) if stage in DOC_STAGES else None,
         "closed": stage in ("rejected", "withdrawn", "joined"),
     }
 
@@ -221,4 +222,60 @@ async def request(token: str, body: PortalRequest):
             "needs_manual_scheduling": True,
             "scheduling_notes": f"Asked to reschedule from the portal: {body.details}".strip(),
         }).eq("id", c["id"]).execute()
+    return {"ok": True}
+
+
+# ── Onboarding documents ─────────────────────────────────────────────────
+
+DOC_STAGES = {"offer", "pre_joining", "joined"}
+DEFAULT_DOCS = [
+    {"kind": "pan", "label": "PAN card"},
+    {"kind": "aadhaar", "label": "Aadhaar card"},
+    {"kind": "degree", "label": "Highest degree certificate"},
+    {"kind": "payslips", "label": "Last 3 payslips"},
+    {"kind": "relieving_letter", "label": "Relieving or resignation acceptance letter"},
+    {"kind": "bank", "label": "Cancelled cheque or bank statement"},
+    {"kind": "photo", "label": "Passport-size photo"},
+]
+
+
+def _checklist(c: dict) -> list[dict]:
+    from app.services.compliance import org_settings
+    return org_settings(c.get("org_id")).get("onboarding_documents") or DEFAULT_DOCS
+
+
+def _documents(c: dict) -> list[dict]:
+    uploaded = db.get_supabase().table("candidate_documents").select(
+        "id, kind, file_name, status, note, uploaded_at").eq("candidate_id", c["id"]).order(
+        "uploaded_at", desc=True).execute().data or []
+    latest: dict[str, dict] = {}
+    for d in uploaded:
+        latest.setdefault(d["kind"], d)
+    return [{**item, "upload": latest.get(item["kind"])} for item in _checklist(c)]
+
+
+@public_router.post("/{token}/documents")
+async def upload_document(token: str, kind: str = Form(...), file: UploadFile = File(...)):
+    c = _candidate(token)
+    if (c.get("stage") or "") not in DOC_STAGES:
+        raise HTTPException(status_code=409, detail="Documents open once you have an offer")
+    if kind not in {d["kind"] for d in _checklist(c)}:
+        raise HTTPException(status_code=400, detail="Unknown document")
+    name = (file.filename or "document").lower()
+    if not name.endswith((".pdf", ".jpg", ".jpeg", ".png")):
+        raise HTTPException(status_code=400, detail="Upload a PDF, JPG or PNG")
+    data = await file.read()
+    if len(data) > 8 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Files must be under 8 MB")
+    import uuid
+    path = f"{c.get('org_id') or 'shared'}/{c['id']}/{kind}-{uuid.uuid4().hex[:8]}-{name}"
+    supabase = db.get_supabase()
+    try:
+        supabase.storage.from_("documents").upload(path, data, {"content-type": file.content_type or "application/octet-stream"})
+    except Exception:
+        raise HTTPException(status_code=503, detail="Uploads aren't available right now; please try later")
+    row = {"candidate_id": c["id"], "kind": kind, "file_path": path, "file_name": file.filename}
+    if c.get("org_id"):
+        row["org_id"] = c["org_id"]
+    supabase.table("candidate_documents").insert(row).execute()
     return {"ok": True}

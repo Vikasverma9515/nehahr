@@ -79,7 +79,8 @@ async def test_scheduling_rejects_unknown_slot_and_accepts_valid_one():
 
 
 def test_prompts_cover_every_call_type():
-    for call_type in ["screening", "scheduling", "reminder", "result", "pre_joining", "engagement"]:
+    for call_type in ["screening", "scheduling", "reminder", "result", "pre_joining", "engagement",
+                      "no_show", "day_one", "week_one"]:
         ctx = {**CTX, "call": {"call_type": call_type, "channel": "phone"}}
         text = prompts.for_call(ctx)
         assert "Neha" in text and "end_call" in text

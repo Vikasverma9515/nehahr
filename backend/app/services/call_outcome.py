@@ -46,11 +46,11 @@ class CallOutcome:
 
     def _build_call_context(self) -> dict:
         """Load per-call context depending on call type."""
-        if self.call_type == "reminder":
+        if self.call_type in ("reminder", "no_show"):
             return self._build_reminder_context()
         if self.call_type == "result":
             return self._build_result_context()
-        if self.call_type in ("pre_joining", "engagement"):
+        if self.call_type in ("pre_joining", "engagement", "day_one", "week_one"):
             return self._build_pre_joining_context()
         if self.call_type != "scheduling":
             return {}
@@ -161,7 +161,7 @@ class CallOutcome:
         supabase = db.get_supabase()
         result = (
             supabase.table("interviews")
-            .select("id, scheduled_at, interview_type, duration_minutes, interviewers(timezone)")
+            .select("id, scheduled_at, interview_type, duration_minutes, meeting_link, interviewers(timezone)")
             .eq("candidate_id", self.candidate_id)
             .eq("status", "scheduled")
             .order("scheduled_at", desc=False)
@@ -184,6 +184,7 @@ class CallOutcome:
             "interview_time": time_str,
             "interview_type": iv.get("interview_type", "video"),
             "duration_minutes": iv.get("duration_minutes", 60),
+            "meeting_link": iv.get("meeting_link"),
         }
 
     def _build_result_context(self) -> dict:
@@ -379,9 +380,13 @@ class CallOutcome:
         if self.call_type == "result":
             await self._finalize_result_call()
 
-        # For pre-joining/engagement calls: update candidate status
-        if self.call_type in ("pre_joining", "engagement"):
+        # For pre-joining/engagement and first-day / first-week calls
+        if self.call_type in ("pre_joining", "engagement", "day_one", "week_one"):
             await self._finalize_pre_joining_call(extracted)
+
+        # Candidate didn't show up to the interview: record what they said
+        if self.call_type == "no_show":
+            await self._finalize_no_show_call(extracted)
 
         # For AI video interviews: score the answers onto the invite
         if self.call_type == "interview":
@@ -705,6 +710,20 @@ class CallOutcome:
             "scheduling_notes": note,
             "last_contact_at": datetime.now(timezone.utc).isoformat(),
         }).eq("id", self.candidate_id).execute()
+
+    async def _finalize_no_show_call(self, extracted: dict):
+        supabase = db.get_supabase()
+        if extracted.get("candidate_dropping"):
+            supabase.table("interviews").update({"status": "no_show"}).eq(
+                "candidate_id", self.candidate_id).eq("status", "scheduled").execute()
+            note = f"No-show: candidate can't make the interview. {extracted.get('drop_reason') or ''}".strip()
+            supabase.table("candidates").update({
+                "needs_manual_scheduling": True, "scheduling_notes": note,
+            }).eq("id", self.candidate_id).execute()
+        elif extracted.get("attendance_confirmed"):
+            supabase.table("candidates").update({
+                "scheduling_notes": "Late for the interview; Neha called and they're joining now.",
+            }).eq("id", self.candidate_id).execute()
 
     async def _finalize_pre_joining_call(self, extracted: dict):
         """Handle pre-joining (Track A) and engagement (Track B) call outcomes.

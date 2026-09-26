@@ -289,3 +289,15 @@ async def rescore(candidate_id: str):
               "disqualification_reason": None if card["qualified"] else card.get("reason")}
     supabase.table("candidates").update(update).eq("id", candidate_id).execute()
     return card
+
+
+
+@router.get("/{candidate_id}/documents/{doc_id}/url")
+async def document_url(candidate_id: str, doc_id: str):
+    """Short-lived link to view an uploaded onboarding document."""
+    doc = get_supabase().table("candidate_documents").select("file_path, candidate_id").eq(
+        "id", doc_id).single().execute().data
+    if not doc or doc["candidate_id"] != candidate_id:
+        raise HTTPException(status_code=404, detail="Document not found")
+    signed = get_supabase().storage.from_("documents").create_signed_url(doc["file_path"], 600)
+    return {"url": signed.get("signedURL") or signed.get("signedUrl")}

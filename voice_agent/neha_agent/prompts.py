@@ -209,6 +209,34 @@ A pre-joining confirmation. {w['name']} joins on {joining} as {w['job']}.
     return _header(ctx, task)
 
 
+def no_show(ctx: dict) -> str:
+    w = _who(ctx)
+    c = ctx.get("context") or {}
+    task = f"""\
+{w['name']}'s {c.get('interview_type', 'video')} interview for {w['job']} started a few minutes ago and they
+haven't joined. Call to check, kindly and briefly (under a minute).
+- If they're joining now or had trouble with the link, call `confirm_attendance`, tell them the link
+  is in their email{' and repeat it only if asked' if c.get('meeting_link') else ''}, and end quickly.
+- If they can't make it, call `candidate_cannot_attend` with the reason and say the team will find
+  a new time.
+Then `end_call`.
+"""
+    return _header(ctx, task)
+
+
+def first_days(ctx: dict, week: bool) -> str:
+    w = _who(ctx)
+    when = "first week" if week else "first day"
+    task = f"""\
+A friendly check-in on {w['name']}'s {when} as {w['job']}. Ask how it went, whether they have their
+laptop, accounts and access, whether they've met their manager and team, and if anything is
+blocking them. Listen for early regret or problems HR should fix.
+Call `record_engagement` with a 1 to 10 score and notes listing anything HR must fix, then close
+warmly and `end_call`. Keep it under two minutes.
+"""
+    return _header(ctx, task)
+
+
 def video_interview(ctx: dict) -> str:
     w = _who(ctx)
     cfg = ctx.get("screening_config") or {}
@@ -322,6 +350,9 @@ def for_call(ctx: dict) -> str:
         "engagement": lambda c: pre_joining(c, engagement=True),
         "interview": video_interview,
         "inbound": inbound,
+        "no_show": no_show,
+        "day_one": lambda c: first_days(c, week=False),
+        "week_one": lambda c: first_days(c, week=True),
     }
     return builders.get(call_type, screening)(ctx)
 
@@ -347,6 +378,10 @@ def _greeting(ctx: dict) -> str:
         return f"Hi {w['name']}, this is Neha from the {w['company']} recruiting team. Quick reminder about your interview today. Is now a good moment?"
     if call_type == "scheduling":
         return f"Hi, is this {w['name']}? This is Neha from the {w['company']} recruiting team, with some good news about your application."
+    if call_type == "no_show":
+        return f"Hi {w['name']}, it's Neha from {w['company']}. Your interview has just started. Is everything okay?"
+    if call_type in ("day_one", "week_one"):
+        return f"Hi {w['name']}! It's Neha from {w['company']}. Just calling to see how your {'first week' if call_type == 'week_one' else 'first day'} went."
     if call_type == "inbound":
         if not ctx.get("candidate"):
             return f"Hi, you've reached the {w['company']} recruiting team. This is Neha, an AI assistant. Who am I speaking with?"

@@ -39,6 +39,8 @@ import { MessagesCard, type MessageRow } from "@/app/components/messages-card";
 import { PortalLinkButton } from "@/app/components/portal-link-button";
 import { OfferCard } from "@/app/components/offer-card";
 import { RescoreButton } from "@/app/components/rescore-button";
+import { DocumentsCard, type DocRow } from "@/app/components/documents-card";
+import { NoShowButton } from "@/app/components/no-show-button";
 import type { OfferRow } from "@/app/actions/offers";
 import type { NehaRole } from "@/app/actions/interviews";
 
@@ -121,6 +123,12 @@ export default async function CandidateDetailPage({
     .select("id, status, designation, ctc, joining_date, expires_at, sent_at, responded_at, approval_required, decline_reason, signature_name, token, letter_html")
     .eq("candidate_id", id)
     .order("created_at", { ascending: false });
+
+  const { data: documents } = await supabase
+    .from("candidate_documents")
+    .select("id, kind, file_name, status, note, uploaded_at")
+    .eq("candidate_id", id)
+    .order("uploaded_at", { ascending: false });
 
   const scoreBreakdown = candidate.score_breakdown as Record<string, number> | null;
   const job = candidate.jobs as unknown as {
@@ -394,6 +402,13 @@ export default async function CandidateDetailPage({
                 defaultTitle={job?.title || ""}
                 appUrl={process.env.FRONTEND_URL || ""}
               />
+            </Card>
+          )}
+
+          {/* Joining documents */}
+          {(["offer", "pre_joining", "joined"].includes(candidate.stage) || (documents || []).length > 0) && (
+            <Card>
+              <DocumentsCard candidateId={candidate.id} docs={(documents || []) as DocRow[]} />
             </Card>
           )}
 
@@ -729,6 +744,7 @@ function JourneyTimeline({
             </a>
           )}
           {isScheduled && <MarkCompleteButton interviewId={iv.id} />}
+          {isScheduled && ivTime.getTime() <= now.getTime() + 30 * 60_000 && <NoShowButton interviewId={iv.id} />}
           {needsFeedback && <FeedbackButton interviewId={iv.id} />}
           {isScheduled && !iv.candidate_reminded && (
             <ReminderCallButton candidateId={candidateId} />
