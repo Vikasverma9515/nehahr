@@ -74,3 +74,18 @@ export async function rescoreCandidate(candidateId: string) {
   revalidatePath(`/dashboard/candidates/${candidateId}`);
   return { score: (body as { score: number }).score };
 }
+
+const MOVABLE = new Set(["new", "screened", "shortlisted", "interviewing", "offer", "joined", "rejected"]);
+
+export async function moveCandidateStage(candidateId: string, stage: string) {
+  if (!MOVABLE.has(stage)) return { error: "Can't move to that stage" };
+  const supabase = await createClient();
+  const update: Record<string, unknown> = { stage };
+  if (stage === "rejected") update.qualification_status = "unqualified";
+  if (stage === "shortlisted") update.qualification_status = "qualified";
+  const { error } = await supabase.from("candidates").update(update).eq("id", candidateId);
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard/jobs");
+  revalidatePath(`/dashboard/candidates/${candidateId}`);
+  return { success: true };
+}
