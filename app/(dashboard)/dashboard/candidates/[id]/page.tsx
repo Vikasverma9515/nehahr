@@ -37,6 +37,8 @@ import { AiInterviewCard, type AiInterviewRow } from "@/app/components/ai-interv
 import { NehaMeetControl } from "@/app/components/neha-meet-control";
 import { MessagesCard, type MessageRow } from "@/app/components/messages-card";
 import { PortalLinkButton } from "@/app/components/portal-link-button";
+import { OfferCard } from "@/app/components/offer-card";
+import type { OfferRow } from "@/app/actions/offers";
 import type { NehaRole } from "@/app/actions/interviews";
 
 const SCORING_WEIGHTS: Record<string, number> = {
@@ -112,6 +114,12 @@ export default async function CandidateDetailPage({
     .eq("candidate_id", id)
     .order("created_at", { ascending: true })
     .limit(100);
+
+  const { data: offers } = await supabase
+    .from("offers")
+    .select("id, status, designation, ctc, joining_date, expires_at, sent_at, responded_at, approval_required, decline_reason, signature_name, token, letter_html")
+    .eq("candidate_id", id)
+    .order("created_at", { ascending: false });
 
   const scoreBreakdown = candidate.score_breakdown as Record<string, number> | null;
   const job = candidate.jobs as unknown as {
@@ -373,6 +381,18 @@ export default async function CandidateDetailPage({
                   {(candidate.match_reasons?.gaps || []).map((x: string) => <p key={x} className="text-dark-text-secondary">– {x}</p>)}
                 </div>
               </div>
+            </Card>
+          )}
+
+          {/* Offer */}
+          {(["interviewing", "offer", "pre_joining", "joined", "scheduled"].includes(candidate.stage) || (offers || []).length > 0) && (
+            <Card>
+              <OfferCard
+                candidateId={candidate.id}
+                offers={(offers || []) as OfferRow[]}
+                defaultTitle={job?.title || ""}
+                appUrl={process.env.FRONTEND_URL || ""}
+              />
             </Card>
           )}
 
