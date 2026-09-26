@@ -9,6 +9,7 @@ import {
   type ScreeningConfig,
   type ScreeningQuestion,
 } from "@/app/actions/screening";
+import { useToast } from "@/app/components/ui/toast";
 
 const inputCls = "block w-full rounded-lg px-3 py-2 text-[13px]";
 const labelCls = "block text-[10px] font-normal uppercase tracking-[0.1em] text-dark-text-muted";
@@ -24,18 +25,17 @@ export function ScreeningBuilder({ jobId, initial }: { jobId: string; initial: S
   const [knockouts, setKnockouts] = useState<string[]>(initial?.knockouts || []);
   const [must, setMust] = useState<MustHaves>(initial?.must_haves || { allow_relocation: true });
   const [language, setLanguage] = useState(initial?.language || "auto");
-  const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   function draft() {
-    setMessage(null);
     startTransition(async () => {
       const res = await generateScreening(jobId);
-      if (res.error || !res.draft) return setMessage(res.error || "No draft");
+      if (res.error || !res.draft) return toast(res.error || "No draft generated", "error");
       setQuestions(res.draft.questions || []);
       setKnockouts(res.draft.knockouts || []);
       setInterviewQs((res.draft.interview_questions || []).map((q) => q.text));
-      setMessage("Draft ready: edit anything, then save.");
+      toast("Draft ready — edit anything, then save.");
     });
   }
 
@@ -49,7 +49,8 @@ export function ScreeningBuilder({ jobId, initial }: { jobId: string; initial: S
     };
     startTransition(async () => {
       const res = await saveScreeningConfig(jobId, config);
-      setMessage(res.error || "Saved. Neha uses this on the next call.");
+      if (res.error) toast(res.error, "error");
+      else toast("Saved — Neha uses this on the next call.");
     });
   }
 
@@ -158,7 +159,6 @@ export function ScreeningBuilder({ jobId, initial }: { jobId: string; initial: S
         </label>
         <button onClick={save} disabled={pending}
           className="btn-primary rounded-xl px-5 py-2 text-[12px] font-semibold text-white disabled:opacity-50">Save</button>
-        {message && <span className="text-[12px] text-dark-text-secondary">{message}</span>}
       </section>
     </div>
   );
