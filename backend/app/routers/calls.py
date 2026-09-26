@@ -88,13 +88,14 @@ async def get_call_recording(call_id: str):
     if not recording_url:
         raise HTTPException(status_code=404, detail="No recording available")
 
+    # Twilio recordings need the account's basic auth; room recordings don't.
+    is_twilio = "api.twilio.com" in recording_url
+    auth = (settings.twilio_account_sid, settings.twilio_auth_token) if is_twilio else None
+    media_type = "audio/mpeg" if is_twilio or recording_url.endswith(".mp3") else "video/mp4"
+
     async def stream_audio():
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            async with client.stream(
-                "GET",
-                recording_url,
-                auth=(settings.twilio_account_sid, settings.twilio_auth_token),
-            ) as response:
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+            async with client.stream("GET", recording_url, auth=auth) as response:
                 if response.status_code != 200:
                     return
                 async for chunk in response.aiter_bytes(chunk_size=8192):
@@ -102,7 +103,7 @@ async def get_call_recording(call_id: str):
 
     return StreamingResponse(
         stream_audio(),
-        media_type="audio/mpeg",
+        media_type=media_type,
         headers={"Accept-Ranges": "bytes"},
     )
 

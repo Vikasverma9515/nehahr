@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PersonAvatar } from "@/app/components/person-avatar";
+import { AiInterviewCard, type AiInterviewRow } from "@/app/components/ai-interview-card";
 
 const SCORING_WEIGHTS: Record<string, number> = {
   location_fit: 10,
@@ -93,6 +94,13 @@ export default async function CandidateDetailPage({
     .select("*, interviewers(name, email)")
     .eq("candidate_id", id)
     .order("scheduled_at", { ascending: false });
+
+  // Table from migration 012; an older database just shows no invites.
+  const { data: aiInterviews } = await supabase
+    .from("ai_interviews")
+    .select("id, status, expires_at, invited_at, score, summary, call_id, token")
+    .eq("candidate_id", id)
+    .order("invited_at", { ascending: false });
 
   const scoreBreakdown = candidate.score_breakdown as Record<string, number> | null;
   const job = candidate.jobs as unknown as {
@@ -331,6 +339,15 @@ export default async function CandidateDetailPage({
                 </SidebarSection>
               )}
             </div>
+          </Card>
+
+          {/* AI video interview */}
+          <Card>
+            <AiInterviewCard
+              candidateId={candidate.id}
+              rows={(aiInterviews || []) as AiInterviewRow[]}
+              appUrl={process.env.FRONTEND_URL || ""}
+            />
           </Card>
 
           {/* Scorecard — compact, only if scored */}
