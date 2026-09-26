@@ -141,7 +141,7 @@ export default async function AiInterviewsPage({
             });
 
             return (
-              <div key={r.id} className="flex items-center gap-4 px-4 py-3 hover:bg-white/[0.03] transition-colors">
+              <Link key={r.id} href={`/dashboard/ai-interviews/${r.id}`} className="flex items-center gap-4 px-4 py-3 hover:bg-white/[0.03] transition-colors">
                 {/* Status icon */}
                 <div
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${status.bg}`}
@@ -163,12 +163,9 @@ export default async function AiInterviewsPage({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     {cand ? (
-                      <Link
-                        href={`/dashboard/candidates/${cand.id}`}
-                        className="text-[13px] font-semibold text-dark-text hover:underline"
-                      >
+                      <span className="text-[13px] font-semibold text-dark-text">
                         {cand.name}
-                      </Link>
+                      </span>
                     ) : (
                       <span className="text-[13px] font-semibold text-dark-text">Unknown</span>
                     )}
@@ -218,7 +215,7 @@ export default async function AiInterviewsPage({
                     </Link>
                   )}
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
