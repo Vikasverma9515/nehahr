@@ -276,6 +276,9 @@ class CallOutcome:
 
         print(f"[HANDLER] Booked: {slot['label']} with Meet {booking.get('meet_link')}")
 
+        from app.services import messaging
+        messaging.booked(self.candidate_id, slot.get("label") or slot["start"], booking.get("meet_link"))
+
         # Send confirmation email via Gmail API to both the candidate and the
         # interviewer. This is independent of Google Calendar's invite-email
         # logic (which can silently drop self-invites and has inconsistent

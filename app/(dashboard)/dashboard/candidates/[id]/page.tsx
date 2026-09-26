@@ -35,6 +35,7 @@ import Link from "next/link";
 import { PersonAvatar } from "@/app/components/person-avatar";
 import { AiInterviewCard, type AiInterviewRow } from "@/app/components/ai-interview-card";
 import { NehaMeetControl } from "@/app/components/neha-meet-control";
+import { MessagesCard, type MessageRow } from "@/app/components/messages-card";
 import type { NehaRole } from "@/app/actions/interviews";
 
 const SCORING_WEIGHTS: Record<string, number> = {
@@ -103,6 +104,13 @@ export default async function CandidateDetailPage({
     .select("id, status, expires_at, invited_at, score, summary, call_id, token")
     .eq("candidate_id", id)
     .order("invited_at", { ascending: false });
+
+  const { data: messages } = await supabase
+    .from("messages")
+    .select("id, direction, body, author, channel, status, created_at")
+    .eq("candidate_id", id)
+    .order("created_at", { ascending: true })
+    .limit(100);
 
   const scoreBreakdown = candidate.score_breakdown as Record<string, number> | null;
   const job = candidate.jobs as unknown as {
@@ -365,6 +373,11 @@ export default async function CandidateDetailPage({
               </div>
             </Card>
           )}
+
+          {/* WhatsApp / SMS thread */}
+          <Card>
+            <MessagesCard candidateId={candidate.id} messages={(messages || []) as MessageRow[]} optedOut={!!candidate.messaging_opt_out} />
+          </Card>
 
           {/* AI video interview */}
           <Card>

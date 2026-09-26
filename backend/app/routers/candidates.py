@@ -239,3 +239,22 @@ async def rematch(candidate_id: str):
     if not match:
         raise HTTPException(status_code=502, detail="Couldn't score the match right now")
     return match
+
+
+# ── Messages ─────────────────────────────────────────────────────────────
+
+class SendMessageRequest(BaseModel):
+    body: str
+
+
+@router.post("/{candidate_id}/messages")
+async def send_message(candidate_id: str, req: SendMessageRequest):
+    """A recruiter writes to the candidate on WhatsApp (or SMS)."""
+    from app.services import messaging
+    text = req.body.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Message is empty")
+    try:
+        return messaging.send(candidate_id, text[:1500], purpose="manual", author="recruiter")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
