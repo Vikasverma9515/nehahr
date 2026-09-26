@@ -6,13 +6,13 @@ import { createClient } from "@/app/lib/supabase/server";
 import { backendFetch } from "@/app/lib/backend";
 
 export async function deleteCandidate(candidateId: string) {
-  const supabase = await createClient();
-
-  // Delete in order: interviews → calls → candidate (cascade handles it, but be explicit)
-  await supabase.from("interviews").delete().eq("candidate_id", candidateId);
-  await supabase.from("calls").delete().eq("candidate_id", candidateId);
-  await supabase.from("candidates").delete().eq("id", candidateId);
-
+  // The backend erases everything (calls, interviews, messages, the resume
+  // file) and writes an audit entry, which is what an erasure request needs.
+  const res = await backendFetch(`/api/candidates/${candidateId}/erase`, { method: "DELETE" }).catch(() => null);
+  if (!res || !res.ok) {
+    const supabase = await createClient();
+    await supabase.from("candidates").delete().eq("id", candidateId);
+  }
   redirect("/dashboard/candidates");
 }
 

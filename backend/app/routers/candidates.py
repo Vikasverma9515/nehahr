@@ -2,11 +2,12 @@
 
 import uuid
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.dependencies import get_supabase
 from app.services import intake
+from app.security import CurrentUser, require_user
 from app.services.tenancy import current_org, scope, stamp
 
 router = APIRouter()
@@ -258,3 +259,11 @@ async def send_message(candidate_id: str, req: SendMessageRequest):
         return messaging.send(candidate_id, text[:1500], purpose="manual", author="recruiter")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/{candidate_id}/erase")
+async def erase(candidate_id: str, user: CurrentUser = Depends(require_user)):
+    """Right to erasure: delete the candidate and everything about them."""
+    from app.services import compliance
+    compliance.erase_candidate(candidate_id, actor=user.id)
+    return {"ok": True}

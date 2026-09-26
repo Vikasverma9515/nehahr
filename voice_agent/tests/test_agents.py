@@ -202,3 +202,9 @@ def test_prompt_uses_resume_and_language():
                                 "preferred_language": "hinglish"}}
     text = prompts.for_call(ctx)
     assert "SDE 2 at Acme" in text and "no Kafka" in text and "Hinglish" in text
+
+
+def test_greetings_disclose_recording():
+    for call_type in ["screening", "scheduling", "reminder", "result", "pre_joining", "inbound"]:
+        ctx = {**CTX, "call": {"call_type": call_type, "channel": "phone"}}
+        assert "recorded" in prompts.greeting(ctx)
