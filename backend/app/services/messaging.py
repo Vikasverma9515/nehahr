@@ -220,7 +220,8 @@ async def handle_inbound(from_raw: str, to_raw: str, body: str, sid: str) -> str
         from app.workers.queue import enqueue
         call_type = "screening" if candidate.get("stage") in ("new", "screening") else (
             "scheduling" if candidate.get("stage") in ("shortlisted", "scheduling") else "screening")
-        enqueue("call.initiate", {"candidate_id": candidate["id"], "call_type": call_type},
+        enqueue("call.initiate", {"candidate_id": candidate["id"], "call_type": call_type,
+                                  "ignore_calling_hours": True},   # they asked for it
                 delay_seconds=20, dedupe_key=f"wa-call:{sid}")
     elif decision.get("action") == "request":
         kind = decision.get("kind") if decision.get("kind") in ("reschedule", "withdraw", "question") else "question"
