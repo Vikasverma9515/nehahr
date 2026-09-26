@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Copy, Eye, Video, X } from "lucide-react";
 import { cancelAiInterview, inviteToAiInterview } from "@/app/actions/ai-interviews";
+import { useToast } from "@/app/components/ui/toast";
 
 export type AiInterviewRow = {
   id: string;
@@ -27,17 +28,17 @@ export function AiInterviewCard({
   appUrl: string;
 }) {
   const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
+  const { toast } = useToast();
 
   function invite() {
-    setMessage(null);
     startTransition(async () => {
       const res = await inviteToAiInterview(candidateId);
-      if ("error" in res && res.error) setMessage(res.error);
-      else if ("link" in res) {
+      if ("error" in res && res.error) {
+        toast(res.error, "error");
+      } else if ("link" in res) {
         await navigator.clipboard?.writeText(res.link).catch(() => null);
-        setMessage(res.emailed ? "Invite emailed. Link copied." : "Link copied (no email sent: connect the HR sender in Settings).");
+        toast(res.emailed ? "Invite emailed. Link copied." : "Link copied (no email sent — connect HR sender in Settings).");
         router.refresh();
       }
     });
@@ -55,7 +56,6 @@ export function AiInterviewCard({
       <p className="text-[12px] text-dark-text-muted">
         A 15-minute first round with Neha on video. The candidate takes it from a link, any time before it expires.
       </p>
-      {message && <p className="mt-2 text-[12px] text-dark-text-secondary">{message}</p>}
       <div className="mt-3 space-y-2">
         {rows.map((r) => (
           <div key={r.id} className="row-item rounded-xl px-3 py-2.5">
