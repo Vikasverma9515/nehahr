@@ -32,6 +32,17 @@ class Settings(BaseSettings):
     hr_reply_to: str = ""  # optional: reply-to for booking emails (e.g. recruiting@example.com)
     hr_company_name: str = "Our Company"
 
+    # LiveKit (voice agent runtime)
+    livekit_url: str = ""            # wss://<project>.livekit.cloud
+    livekit_api_key: str = ""
+    livekit_api_secret: str = ""
+    livekit_agent_name: str = "neha"
+    # Outbound SIP trunk created in LiveKit (Twilio Elastic SIP behind it).
+    livekit_sip_trunk_id: str = ""
+    # Which runtime places phone calls: "twilio" (legacy Media Streams loop)
+    # or "livekit" (the voice agent in voice_agent/).
+    voice_runtime: str = "twilio"
+
     # Security
     # SUPABASE_JWT_SECRET: only for projects on the legacy HS256 secret; newer
     # projects are verified against the project's JWKS automatically.

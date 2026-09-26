@@ -39,6 +39,21 @@ jobs:
         # tests/test_system.py calls live Bedrock/Supabase; run it locally with keys.
         run: pytest tests -q --ignore=tests/test_system.py
 
+  voice-agent:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: voice_agent
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - name: Agent tests (scripted LLM, offline)
+        run: pytest -q
+
   migrations:
     runs-on: ubuntu-latest
     services:

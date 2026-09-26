@@ -6,6 +6,19 @@ from app.config import settings
 from app.services import db
 
 
+def _run_sync(coro):
+    """Run a coroutine from sync code, whether or not an event loop is running here."""
+    import asyncio
+    import concurrent.futures
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(asyncio.run, coro).result()
+
+
 class CallService:
     def __init__(self):
         self.client = Client(settings.twilio_account_sid, settings.twilio_auth_token)
@@ -24,6 +37,10 @@ class CallService:
         3. Ask Twilio to make the call
         4. Update call record with Twilio SID
         """
+        if settings.voice_runtime == "livekit":
+            from app.services import livekit_service
+            return _run_sync(livekit_service.start_phone_call(candidate_id, call_type))
+
         candidate = db.get_candidate(candidate_id)
         if not candidate:
             raise ValueError(f"Candidate {candidate_id} not found")
@@ -60,9 +77,13 @@ class CallService:
             "status": "ringing",
         }
 
-    def end_call(self, twilio_call_sid: str) -> None:
-        """Force-end an active call."""
-        self.client.calls(twilio_call_sid).update(status="completed")
+    def end_call(self, twilio_call_sid: str | None = None, room_name: str | None = None) -> None:
+        """Force-end an active call (Twilio SID or LiveKit room)."""
+        if room_name:
+            from app.services import livekit_service
+            _run_sync(livekit_service.end_room(room_name))
+        if twilio_call_sid:
+            self.client.calls(twilio_call_sid).update(status="completed")
 
 
 call_service = CallService()
