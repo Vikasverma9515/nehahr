@@ -66,3 +66,11 @@ export async function sendCandidateMessage(candidateId: string, body: string) {
   revalidatePath(`/dashboard/candidates/${candidateId}`);
   return { success: true };
 }
+
+export async function rescoreCandidate(candidateId: string) {
+  const res = await backendFetch(`/api/candidates/${candidateId}/rescore`, { method: "POST" });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) return { error: (body as { detail?: string }).detail || "Couldn't re-score" };
+  revalidatePath(`/dashboard/candidates/${candidateId}`);
+  return { score: (body as { score: number }).score };
+}

@@ -267,3 +267,25 @@ async def erase(candidate_id: str, user: CurrentUser = Depends(require_user)):
     from app.services import compliance
     compliance.erase_candidate(candidate_id, actor=user.id)
     return {"ok": True}
+
+
+@router.post("/{candidate_id}/rescore")
+async def rescore(candidate_id: str):
+    """Score again from the latest screening call, with the job's current rubric and must-haves."""
+    from app.services import db as _db
+    from app.services.scoring import score_candidate
+
+    supabase = get_supabase()
+    call = supabase.table("calls").select("extracted_data").eq("candidate_id", candidate_id).eq(
+        "call_type", "screening").not_.is_("extracted_data", "null").order("created_at", desc=True).limit(1).execute().data
+    if not call or not call[0].get("extracted_data"):
+        raise HTTPException(status_code=400, detail="No screening call with answers to score yet")
+    candidate = _db.get_candidate(candidate_id)
+    card = await score_candidate(candidate, call[0]["extracted_data"])
+    if card.get("score") is None:
+        raise HTTPException(status_code=502, detail=card.get("reason") or "Scoring failed")
+    update = {"score": card["score"], "score_breakdown": card.get("breakdown"),
+              "qualification_status": "qualified" if card["qualified"] else "unqualified",
+              "disqualification_reason": None if card["qualified"] else card.get("reason")}
+    supabase.table("candidates").update(update).eq("id", candidate_id).execute()
+    return card

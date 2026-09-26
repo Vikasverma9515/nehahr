@@ -1,5 +1,6 @@
 import { createClient } from "@/app/lib/supabase/server";
 import { Card } from "@/app/components/ui/card";
+import { HiringInsights } from "@/app/components/hiring-insights";
 import {
   Users,
   Phone,
@@ -121,6 +122,9 @@ export default async function AnalyticsPage() {
           Hiring pipeline metrics, conversion rates, and AI call performance
         </p>
       </div>
+
+      {/* ── Time to hire, voice quality, source quality ─────────── */}
+      <HiringInsights />
 
       {/* ── Top KPIs ───────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
