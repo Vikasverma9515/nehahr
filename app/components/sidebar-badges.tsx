@@ -11,6 +11,7 @@ export async function getSidebarBadges(): Promise<Record<string, number>> {
       { count: actionCandidates },
       { count: pendingRequests },
       { count: todayInterviews },
+      { count: liveAiInterviews },
     ] = await Promise.all([
       // Candidates needing action: qualified screened + needs_manual_scheduling
       supabase
@@ -29,12 +30,18 @@ export async function getSidebarBadges(): Promise<Record<string, number>> {
         .eq("status", "scheduled")
         .gte("scheduled_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
         .lte("scheduled_at", new Date(new Date().setHours(23, 59, 59, 999)).toISOString()),
+      // Live AI interviews
+      supabase
+        .from("ai_interviews")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "in_progress"),
     ]);
 
     return {
       candidates: actionCandidates || 0,
       helpdesk: pendingRequests || 0,
       interviews: todayInterviews || 0,
+      "ai-interviews": liveAiInterviews || 0,
     };
   } catch {
     return {};

@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
   AudioLines,
+  Video,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { LogoMark } from "@/app/components/logo";
@@ -27,6 +28,7 @@ const workItems = [
   { href: "/dashboard/jobs", label: "Jobs", icon: Briefcase },
   { href: "/dashboard/interviews", label: "Interviews", icon: Calendar },
   { href: "/dashboard/calls", label: "Calls", icon: Phone },
+  { href: "/dashboard/ai-interviews", label: "AI Interviews", icon: Video },
   { href: "/dashboard/playground", label: "Playground", icon: AudioLines },
 ];
 
