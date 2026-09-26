@@ -1,6 +1,5 @@
 """Agent behaviour with a scripted LLM: tools record the right data."""
 
-import pytest
 from livekit.agents import AgentSession
 
 from neha_agent.agents import CallState, build_agent

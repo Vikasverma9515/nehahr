@@ -22,7 +22,7 @@ import os
 import time
 from datetime import datetime, timezone
 
-from livekit import api, rtc
+from livekit import api
 from livekit.agents import (
     AgentServer,
     AgentSession,
