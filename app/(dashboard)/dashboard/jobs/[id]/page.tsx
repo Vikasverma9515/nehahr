@@ -8,6 +8,7 @@ import Link from "next/link";
 import { PersonAvatar } from "@/app/components/person-avatar";
 import { ScreeningBuilder } from "@/app/components/screening-builder";
 import { ShareReviewButton } from "@/app/components/share-review-button";
+import { PublishJobControl } from "@/app/components/publish-job-control";
 import type { ScreeningConfig } from "@/app/actions/screening";
 
 const STAGE_ORDER = [
@@ -33,6 +34,11 @@ export default async function JobDetailPage({
     .eq("id", id)
     .single();
   if (!job) notFound();
+
+  const { data: org } = job.org_id
+    ? await supabase.from("organizations").select("slug").eq("id", job.org_id).single()
+    : { data: null };
+  const orgSlug = (org?.slug as string | undefined) || null;
 
   const { data: candidates } = await supabase
     .from("candidates")
@@ -110,6 +116,14 @@ export default async function JobDetailPage({
           </div>
         ))}
       </div>
+
+      {/* ── Careers page ───────────────────────────────────────── */}
+      <PublishJobControl
+        jobId={job.id}
+        published={!!job.published}
+        autoScreen={job.auto_screen_min_match ?? null}
+        careersUrl={orgSlug ? `${process.env.FRONTEND_URL || ""}/careers/${orgSlug}/${job.id}` : null}
+      />
 
       {/* ── Screening setup ────────────────────────────────────── */}
       <Card>

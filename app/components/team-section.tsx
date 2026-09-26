@@ -15,7 +15,7 @@ const ROLE_LABELS: Record<TeamRole, string> = {
 };
 
 type Props = {
-  org: { id: string; name: string } | null;
+  org: { id: string; name: string; slug?: string | null } | null;
   members: { user_id: string; email: string; full_name: string | null; role: TeamRole }[];
   invites: { id: string; email: string; role: TeamRole }[];
 };
@@ -53,6 +53,11 @@ export function TeamSection({ org, members, invites }: Props) {
           <p className="mt-0.5 text-[11px] text-dark-text-muted">
             {org ? `${org.name}. ` : ""}Teammates see the same jobs, candidates and calls.
           </p>
+          {org?.slug && (
+            <p className="mt-1 text-[11px] text-dark-text-muted">
+              Careers page: <a href={`/careers/${org.slug}`} target="_blank" className="text-accent hover:underline">/careers/{org.slug}</a>
+            </p>
+          )}
         </div>
         <button
           onClick={() => setShowForm((v) => !v)}

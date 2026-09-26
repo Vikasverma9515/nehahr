@@ -20,7 +20,7 @@ export async function proxy(request: NextRequest) {
   // working and send everything else to the login page instead of crashing.
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     const p = request.nextUrl.pathname;
-    const isPublic = p === "/" || p.startsWith("/login") || p.startsWith("/signup") || p.startsWith("/feedback") || p.startsWith("/interview") || p.startsWith("/c/") || p.startsWith("/review/") || p.startsWith("/offer/");
+    const isPublic = p === "/" || p.startsWith("/login") || p.startsWith("/signup") || p.startsWith("/feedback") || p.startsWith("/interview") || p.startsWith("/c/") || p.startsWith("/review/") || p.startsWith("/offer/") || p.startsWith("/careers");
     return isPublic ? response : NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -65,7 +65,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/interview") ||
     pathname.startsWith("/c/") ||
     pathname.startsWith("/review/") ||
-    pathname.startsWith("/offer/");
+    pathname.startsWith("/offer/") ||
+    pathname.startsWith("/careers");
 
   // Not logged in and trying to access protected routes
   if (!user && !isPublicPage) {
