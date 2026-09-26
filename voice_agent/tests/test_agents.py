@@ -194,3 +194,11 @@ def test_meet_prompts_by_role():
         ctx = {**CTX, "call": {"call_type": "interview", "channel": "meet", "neha_role": role}}
         assert needle in prompts.for_call(ctx)
         assert prompts.greeting(ctx)
+
+
+def test_prompt_uses_resume_and_language():
+    ctx = {**CTX, "candidate": {"name": "Priya Sharma", "current_company": "Acme", "current_title": "SDE 2",
+                                "experience_years": 5, "skills": ["Python"], "match_gaps": ["no Kafka"],
+                                "preferred_language": "hinglish"}}
+    text = prompts.for_call(ctx)
+    assert "SDE 2 at Acme" in text and "no Kafka" in text and "Hinglish" in text

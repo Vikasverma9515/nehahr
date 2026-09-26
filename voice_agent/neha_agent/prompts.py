@@ -48,13 +48,37 @@ def _who(ctx: dict) -> dict:
     }
 
 
+def _known(ctx: dict) -> str:
+    """What the resume already told us, so Neha confirms instead of re-asking."""
+    c = ctx.get("candidate") or {}
+    bits = []
+    if c.get("current_title") or c.get("current_company"):
+        bits.append(f"works as {c.get('current_title') or 'something'} at {c.get('current_company') or 'a company'}")
+    if c.get("experience_years"):
+        bits.append(f"about {c['experience_years']} years of experience")
+    if c.get("current_location"):
+        bits.append(f"based in {c['current_location']}")
+    if c.get("skills"):
+        bits.append("skills: " + ", ".join(c["skills"][:12]))
+    text = ""
+    if bits:
+        text += "From their resume: " + "; ".join(bits) + ". Confirm briefly instead of asking from scratch.\n"
+    if c.get("match_gaps"):
+        text += "Gaps to probe gently: " + "; ".join(c["match_gaps"][:4]) + ".\n"
+    lang = c.get("preferred_language")
+    if lang and lang != "en":
+        text += f"They prefer to talk in {'Hinglish' if lang == 'hinglish' else lang}; open in that language.\n"
+    return text
+
+
 def _header(ctx: dict, task: str) -> str:
     w = _who(ctx)
     today = datetime.now().strftime("%A, %d %B %Y")
     return (
         f"You are Neha, an AI recruiter for {w['company']}. Today is {today}.\n"
         f"You are talking with {w['full_name']} about the {w['job']} role.\n"
-        f"# Your task\n{task}\n\n"
+        + _known(ctx)
+        + f"# Your task\n{task}\n\n"
         + VOICE_STYLE.format(company=w["company"])
         + "\n" + COMMON_RULES
     )

@@ -157,12 +157,20 @@ export default async function CandidatesPage({
         title="Candidates"
         description="Manage your candidate pipeline"
         action={
-          <Link
-            href="/dashboard/candidates/new"
-            className="btn-primary rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white"
-          >
-            Add Candidate
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/candidates/import"
+              className="rounded-xl border border-white/[0.08] px-4 py-2.5 text-[13px] font-medium text-dark-text-secondary hover:bg-white/[0.04]"
+            >
+              Import CSV or resumes
+            </Link>
+            <Link
+              href="/dashboard/candidates/new"
+              className="btn-primary rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white"
+            >
+              Add Candidate
+            </Link>
+          </div>
         }
       />
 

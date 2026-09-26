@@ -343,6 +343,29 @@ export default async function CandidateDetailPage({
             </div>
           </Card>
 
+          {/* Resume match (from bulk intake) */}
+          {candidate.match_score != null && (
+            <Card>
+              <div className="flex items-center justify-between">
+                <h2 className="text-[13px] font-normal uppercase tracking-[0.1em] text-dark-text-secondary">Resume match</h2>
+                <span className="font-display text-[22px] text-dark-text">{candidate.match_score}%</span>
+              </div>
+              {candidate.match_reasons?.one_line && (
+                <p className="mt-2 text-[12px] text-dark-text-secondary">{candidate.match_reasons.one_line}</p>
+              )}
+              <div className="mt-3 grid grid-cols-2 gap-3 text-[11px]">
+                <div>
+                  <p className="mb-1 uppercase tracking-[0.08em] text-dark-text-muted">Strengths</p>
+                  {(candidate.match_reasons?.strengths || []).map((x: string) => <p key={x} className="text-dark-text-secondary">+ {x}</p>)}
+                </div>
+                <div>
+                  <p className="mb-1 uppercase tracking-[0.08em] text-dark-text-muted">Gaps</p>
+                  {(candidate.match_reasons?.gaps || []).map((x: string) => <p key={x} className="text-dark-text-secondary">– {x}</p>)}
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* AI video interview */}
           <Card>
             <AiInterviewCard

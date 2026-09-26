@@ -90,6 +90,13 @@ def _build_context(call: dict) -> dict:
             "current_location": candidate.get("current_location"),
             "employment_status": candidate.get("employment_status"),
             "preferred_language": candidate.get("preferred_language"),
+            # From the resume, so Neha doesn't re-ask what we already know.
+            "current_company": candidate.get("current_company"),
+            "current_title": candidate.get("current_title"),
+            "experience_years": candidate.get("experience_years"),
+            "skills": candidate.get("skills"),
+            "resume_summary": (candidate.get("resume_parsed") or {}).get("summary"),
+            "match_gaps": (candidate.get("match_reasons") or {}).get("gaps"),
         },
         "job": {
             "title": job.get("title"),
