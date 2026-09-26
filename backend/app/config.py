@@ -11,6 +11,12 @@ class Settings(BaseSettings):
     twilio_auth_token: str = ""
     twilio_phone_number: str = ""
 
+    # WhatsApp / SMS (optional). WhatsApp sender in E.164, e.g. +14155238886 (sandbox).
+    twilio_whatsapp_number: str = ""
+    twilio_sms_number: str = ""          # defaults to twilio_phone_number
+    # JSON map of purpose -> approved WhatsApp Content SID, e.g. {"missed_call": "HX..."}
+    twilio_wa_templates: str = ""
+
     # Deepgram (STT + TTS)
     deepgram_api_key: str = ""
 

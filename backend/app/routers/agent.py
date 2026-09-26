@@ -261,6 +261,9 @@ async def call_status(call_id: str, body: StatusUpdate):
         call = db.get_call(call_id) or {}
         if not call.get("is_test"):
             _reset_unreachable(call, body.status)
+            if call.get("candidate_id") and call.get("channel", "phone") == "phone":
+                from app.services import messaging
+                messaging.missed_call(call["candidate_id"], call.get("call_type", "screening"))
     return {"ok": True}
 
 

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/app/lib/supabase/server";
+import { backendFetch } from "@/app/lib/backend";
 
 export async function deleteCandidate(candidateId: string) {
   const supabase = await createClient();
@@ -50,5 +51,18 @@ export async function rejectCandidate(candidateId: string, reason?: string) {
 
   revalidatePath(`/dashboard/candidates/${candidateId}`);
   revalidatePath("/dashboard/candidates");
+  return { success: true };
+}
+
+export async function sendCandidateMessage(candidateId: string, body: string) {
+  const res = await backendFetch(`/api/candidates/${candidateId}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ body }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    return { error: (e as { detail?: string }).detail || "Could not send" };
+  }
+  revalidatePath(`/dashboard/candidates/${candidateId}`);
   return { success: true };
 }

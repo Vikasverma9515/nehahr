@@ -214,6 +214,10 @@ async def twilio_status_webhook(request: Request):
                     }).eq("id", cid).eq("stage", "scheduling").execute()
                     print(f"[STATUS] Scheduling {our_status} — candidate {cid} reset to 'shortlisted'")
 
+                if our_status in ("no_answer", "busy") and cid:
+                    from app.services import messaging
+                    messaging.missed_call(cid, ctype)
+
         except Exception as e:
             print(f"[STATUS] Stage reset failed: {e}")
 
@@ -235,4 +239,43 @@ async def twilio_recording_webhook(request: Request):
         except Exception as e:
             print(f"[RECORDING ERROR] {e}")
 
+    return Response(content="<Response/>", media_type="application/xml")
+
+
+# ── WhatsApp / SMS ───────────────────────────────────────────────────────
+
+@router.post("/twilio/message", dependencies=[Depends(verify_twilio_request)])
+async def twilio_inbound_message(request: Request):
+    """A candidate messaged us on WhatsApp or SMS: log it and let Neha reply."""
+    from xml.sax.saxutils import escape
+    from app.services import messaging
+
+    form = await request.form()
+    from_raw = form.get("From", "")
+    reply = await messaging.handle_inbound(
+        from_raw, form.get("To", ""), form.get("Body", "") or "", form.get("MessageSid", ""),
+    )
+    if not reply:
+        return Response(content="<Response/>", media_type="application/xml")
+    # Known candidates get the reply through send() so it's logged; unknown
+    # numbers get it straight back in TwiML.
+    candidate = messaging._find_candidate(from_raw.replace("whatsapp:", ""))
+    if candidate:
+        try:
+            messaging.send(candidate["id"], reply, purpose="reply")
+            return Response(content="<Response/>", media_type="application/xml")
+        except Exception as e:
+            print(f"[MESSAGE] reply via API failed, falling back to TwiML: {e}")
+    return Response(content=f"<Response><Message>{escape(reply)}</Message></Response>", media_type="application/xml")
+
+
+@router.post("/twilio/message-status", dependencies=[Depends(verify_twilio_request)])
+async def twilio_message_status(request: Request):
+    form = await request.form()
+    sid, status = form.get("MessageSid"), form.get("MessageStatus")
+    if sid and status:
+        update = {"status": status}
+        if form.get("ErrorCode"):
+            update["error"] = f"{form.get('ErrorCode')}: {form.get('ErrorMessage', '')}"
+        db.get_supabase().table("messages").update(update).eq("provider_sid", sid).execute()
     return Response(content="<Response/>", media_type="application/xml")
