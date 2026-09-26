@@ -3,15 +3,22 @@
 import { useState, useTransition } from "react";
 import { Check, X, RotateCcw } from "lucide-react";
 import { shortlistCandidate, rejectCandidate } from "@/app/actions/candidates";
+import { useToast } from "@/app/components/ui/toast";
 
 export function ShortlistButton({ candidateId }: { candidateId: string }) {
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState(false);
+  const { toast } = useToast();
 
   function handleClick() {
     startTransition(async () => {
       const res = await shortlistCandidate(candidateId);
-      if (res.success) setDone(true);
+      if (res.success) {
+        setDone(true);
+        toast("Candidate shortlisted");
+      } else {
+        toast("Failed to shortlist", "error");
+      }
     });
   }
 
@@ -41,11 +48,13 @@ export function ShortlistButton({ candidateId }: { candidateId: string }) {
 export function RejectButton({ candidateId }: { candidateId: string }) {
   const [pending, startTransition] = useTransition();
   const [confirming, setConfirming] = useState(false);
+  const { toast } = useToast();
 
   function handleClick() {
     startTransition(async () => {
       await rejectCandidate(candidateId);
       setConfirming(false);
+      toast("Candidate rejected", "info");
     });
   }
 
@@ -87,11 +96,17 @@ export function RejectButton({ candidateId }: { candidateId: string }) {
 export function OverrideShortlistButton({ candidateId }: { candidateId: string }) {
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState(false);
+  const { toast } = useToast();
 
   function handleClick() {
     startTransition(async () => {
       const res = await shortlistCandidate(candidateId);
-      if (res.success) setDone(true);
+      if (res.success) {
+        setDone(true);
+        toast("Shortlisted (HR override)");
+      } else {
+        toast("Failed to shortlist", "error");
+      }
     });
   }
 
