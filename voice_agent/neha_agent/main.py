@@ -22,7 +22,7 @@ import os
 import time
 from datetime import datetime, timezone
 
-from livekit import api
+from livekit import api, rtc
 from livekit.agents import (
     AgentServer,
     AgentSession,
@@ -102,7 +102,20 @@ async def entrypoint(ctx: JobContext) -> None:
     ctx.log_context_fields = {"call_id": call_id, "channel": channel}
 
     backend = BackendClient()
-    call_ctx = await _load_context(backend, meta)
+    if channel == "inbound":
+        # A SIP dispatch rule sent us here: the caller is already in the room.
+        await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+        caller = await ctx.wait_for_participant(kind=rtc.ParticipantKind.PARTICIPANT_KIND_SIP)
+        call_ctx = await backend.inbound(
+            caller.attributes.get("sip.phoneNumber", ""),
+            caller.attributes.get("sip.trunkPhoneNumber"),
+            ctx.room.name,
+        )
+        call_id = call_ctx["call_id"]
+        channel = "phone"
+        meta = {**meta, "inbound_identity": caller.identity}
+    else:
+        call_ctx = await _load_context(backend, meta)
     call_ctx.setdefault("call", {}).setdefault("channel", channel)
     call_type = call_ctx["call"].get("call_type", meta.get("call_type", "screening"))
     is_phone = channel == "phone"
@@ -110,7 +123,8 @@ async def entrypoint(ctx: JobContext) -> None:
     state = CallState(call_id=call_id, call_type=call_type, channel=channel, context=call_ctx)
     tracker = LatencyTracker()
 
-    await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
+    if not meta.get("inbound_identity"):
+        await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
 
     session = AgentSession(
         stt=build_stt(pipeline_spec.get("stt"), phone=is_phone),
@@ -214,7 +228,11 @@ async def entrypoint(ctx: JobContext) -> None:
         delete_room_on_close=is_phone,
     )
 
-    if is_phone:
+    if meta.get("inbound_identity"):
+        room_options.participant_identity = meta["inbound_identity"]
+        await session.start(agent=agent, room=ctx.room, room_options=room_options)
+        session.say(prompts.greeting(call_ctx), allow_interruptions=True)
+    elif is_phone:
         await _run_phone(ctx, session, agent, room_options, backend, state, meta, call_ctx)
     else:
         await session.start(agent=agent, room=ctx.room, room_options=room_options)

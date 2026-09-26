@@ -9,6 +9,7 @@ every channel:
 | `playground` | A recruiter talks to Neha from **Dashboard → Playground** |
 | `room` | The candidate joins our own interview room at `/interview/<token>` |
 | `meet` | The Meet bot (`meet_bot/`) bridges a Google Meet into the room |
+| `inbound` | A candidate rings the Neha number (SIP dispatch rule) |
 
 ## Pipeline
 
@@ -56,10 +57,21 @@ Playground in the dashboard.
 
 ### Phone setup (once)
 
-1. In Twilio, create an Elastic SIP trunk with a termination URI and credentials.
-2. In LiveKit, create an **outbound** SIP trunk pointing at it with your Twilio number, and copy its
-   id into the backend's `LIVEKIT_SIP_TRUNK_ID`.
-3. Set `VOICE_RUNTIME=livekit` on the backend.
+1. In Twilio, create an Elastic SIP trunk with a termination URI and a credential list, and
+   attach your phone number to it. Set its Origination URI to your LiveKit project's SIP URI.
+2. Create the LiveKit side (outbound trunk, inbound trunk, inbound dispatch rule):
+
+   ```bash
+   python scripts/setup_sip.py --number +918035551234 \
+       --twilio-termination neha.pstn.twilio.com --username neha --password '...'
+   ```
+
+3. Put the printed outbound trunk id in the backend's `LIVEKIT_SIP_TRUNK_ID` and set
+   `VOICE_RUNTIME=livekit`.
+
+Inbound calls land in an `inbound-*` room with the agent. Neha looks the caller up by number,
+answers status questions from their record, and files reschedule / withdraw / question
+requests for HR (`candidate_requests`).
 
 ## Tests
 

@@ -34,12 +34,26 @@ async def call_context(call_id: str):
     call = db.get_call(call_id)
     if not call:
         raise HTTPException(status_code=404, detail="Call not found")
-    candidate = db.get_candidate(call["candidate_id"])
+    return _build_context(call)
+
+
+def _build_context(call: dict) -> dict:
+    call_id = call["id"]
+    candidate = db.get_candidate(call["candidate_id"]) if call.get("candidate_id") else None
     if not candidate:
+        if call.get("call_type") == "inbound":
+            from app.config import settings
+            return {
+                "call": {"id": call_id, "call_type": "inbound", "channel": "phone", "is_test": False},
+                "candidate": None, "job": {}, "company": {"name": settings.hr_company_name},
+                "screening_config": None, "context": {"caller_number": call.get("from_number")},
+            }
         raise HTTPException(status_code=404, detail="Candidate not found")
 
     outcome = CallOutcome(call_id, call["call_type"], call["candidate_id"])
     context = outcome._build_call_context()
+    if call["call_type"] == "inbound":
+        context = _candidate_status(candidate)
 
     job = candidate.get("jobs") or {}
     org_settings: dict = {}
@@ -92,6 +106,104 @@ async def call_context(call_id: str):
 
 
 # ── Status updates while the call is live ────────────────────────────────
+
+def _candidate_status(candidate: dict) -> dict:
+    """What an inbound caller may ask about: where they are and what's next."""
+    status = {"stage": candidate.get("stage"), "caller_number": candidate.get("phone")}
+    try:
+        iv = (
+            db.get_supabase().table("interviews")
+            .select("scheduled_at, interview_type, duration_minutes, meeting_link, status, round_number")
+            .eq("candidate_id", candidate["id"]).eq("status", "scheduled")
+            .order("scheduled_at").limit(1).execute()
+        )
+        if iv.data:
+            status["next_interview"] = iv.data[0]
+    except Exception:
+        pass
+    for key in ("joining_date", "pre_joining_status", "scheduling_notes"):
+        if candidate.get(key):
+            status[key] = candidate[key]
+    return status
+
+
+# ── Inbound calls ────────────────────────────────────────────────────────
+
+class InboundRequest(BaseModel):
+    from_number: str
+    to_number: str | None = None
+    room_name: str | None = None
+
+
+def _find_candidate_by_phone(raw: str) -> dict | None:
+    from app.services.phone import to_e164
+    try:
+        e164 = to_e164(raw)
+    except ValueError:
+        e164 = raw
+    last10 = "".join(ch for ch in e164 if ch.isdigit())[-10:]
+    res = (
+        db.get_supabase().table("candidates").select("id, phone, org_id")
+        .or_(f"phone.eq.{e164},phone.like.%{last10}")
+        .order("created_at", desc=True).limit(1).execute()
+    )
+    return res.data[0] if res.data else None
+
+
+@internal.post("/inbound")
+async def inbound_call(body: InboundRequest):
+    """Someone rang the Neha number: create the call row and return context."""
+    candidate = _find_candidate_by_phone(body.from_number)
+    row = {
+        "candidate_id": candidate["id"] if candidate else None,
+        "call_type": "inbound",
+        "direction": "inbound",
+        "from_number": body.from_number,
+        "to_number": body.to_number,
+        "status": "in_progress",
+        "runtime": "livekit",
+        "channel": "phone",
+        "room_name": body.room_name,
+        "started_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if candidate and candidate.get("org_id"):
+        row["org_id"] = candidate["org_id"]
+    call = db.get_supabase().table("calls").insert(row).execute().data[0]
+    return {"call_id": call["id"], "known_caller": bool(candidate), **_build_context(call)}
+
+
+class CandidateRequestBody(BaseModel):
+    kind: str               # reschedule | withdraw | question | message | callback
+    details: str = ""
+
+
+@internal.post("/calls/{call_id}/request")
+async def candidate_request(call_id: str, body: CandidateRequestBody):
+    """A request or message for HR captured during a call."""
+    call = db.get_call(call_id)
+    if not call:
+        raise HTTPException(status_code=404, detail="Call not found")
+    if body.kind not in ("reschedule", "withdraw", "question", "message", "callback"):
+        raise HTTPException(status_code=400, detail="Unknown request kind")
+    supabase = db.get_supabase()
+    row = {
+        "candidate_id": call.get("candidate_id"),
+        "call_id": call_id,
+        "kind": body.kind,
+        "details": body.details,
+        "caller_number": call.get("from_number") or call.get("to_number"),
+    }
+    if call.get("org_id"):
+        row["org_id"] = call["org_id"]
+    if not call.get("is_test"):
+        supabase.table("candidate_requests").insert(row).execute()
+        if body.kind == "reschedule" and call.get("candidate_id"):
+            supabase.table("candidates").update({
+                "needs_manual_scheduling": True,
+                "scheduling_notes": f"Candidate asked to reschedule: {body.details}".strip(),
+            }).eq("id", call["candidate_id"]).execute()
+    return {"ok": True}
+
 
 class StatusUpdate(BaseModel):
     status: str

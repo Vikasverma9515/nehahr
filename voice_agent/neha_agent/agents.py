@@ -257,6 +257,32 @@ class PreJoiningAgent(NehaAgent):
         return "Saved."
 
 
+class InboundAgent(NehaAgent):
+    @function_tool()
+    async def take_message(
+        self,
+        context: RunContext,
+        kind: Literal["reschedule", "withdraw", "question", "message"],
+        details: Annotated[str, Field(description="What they asked for, with any times, names or emails")],
+    ) -> str:
+        """Pass a request or message to the recruiting team."""
+        state = _state(context)
+        from .backend import BackendClient
+
+        client = BackendClient()
+        try:
+            await client.candidate_request(state.call_id, kind, details)
+        except Exception as e:
+            log.warning("take_message failed: %s", e)
+            raise ToolError("Couldn't save the message; apologise and ask them to email the recruiter.")
+        finally:
+            await client.aclose()
+        requests = list(state.extracted.get("requests") or [])
+        requests.append({"kind": kind, "details": details})
+        state.update(requests=requests)
+        return "Passed to the team. Tell them a recruiter will get back within one working day."
+
+
 AGENTS: dict[str, type[NehaAgent]] = {
     "screening": ScreeningAgent,
     "interview": ScreeningAgent,
@@ -266,6 +292,7 @@ AGENTS: dict[str, type[NehaAgent]] = {
     "result": ResultAgent,
     "pre_joining": PreJoiningAgent,
     "engagement": PreJoiningAgent,
+    "inbound": InboundAgent,
 }
 
 
