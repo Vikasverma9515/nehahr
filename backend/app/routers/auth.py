@@ -142,3 +142,31 @@ async def google_oauth_callback(
     }).eq("id", interviewer_id).execute()
 
     return RedirectResponse(url=f"{settings.frontend_url}/dashboard/settings?calendar_connected=1")
+
+
+# ── Microsoft 365 / Outlook ──────────────────────────────────────────────
+
+@router.get("/microsoft/start", dependencies=[Depends(require_signed_link)])
+async def start_microsoft_oauth(interviewer_id: str = Query(...)):
+    from app.services import microsoft_calendar
+    if not microsoft_calendar.is_configured():
+        return _error_page("Outlook isn't set up", "Ask your admin to set MS_CLIENT_ID and MS_CLIENT_SECRET.", status=503)
+    return RedirectResponse(url=microsoft_calendar.build_auth_url(interviewer_id))
+
+
+@router.get("/microsoft/callback")
+async def microsoft_oauth_callback(
+    code: str = Query(None), state: str = Query(None), error: str = Query(None),
+    error_description: str = Query(None),
+):
+    from app.services import microsoft_calendar
+    if error:
+        return _error_page("Microsoft sign-in failed", error_description or error)
+    value = calendar_service.verify_state(state or "")
+    if not code or not value or not value.startswith("ms:"):
+        return _error_page("Invalid sign-in link", "Please start the connection again from Settings.", status=403)
+    try:
+        await microsoft_calendar.connect(value[3:], code)
+    except Exception as e:
+        return _error_page("Couldn't connect Outlook", str(e), status=500)
+    return RedirectResponse(url=f"{settings.frontend_url}/dashboard/settings?calendar_connected=1")

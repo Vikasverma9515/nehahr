@@ -29,7 +29,7 @@ export default async function SettingsPage({
 
   const { data: interviewers } = await supabase
     .from("interviewers")
-    .select("id, name, email, timezone, working_hours_start, working_hours_end, is_active, google_connected_at")
+    .select("id, name, email, timezone, working_hours_start, working_hours_end, is_active, google_connected_at, ms_connected_at, calendar_provider")
     .order("created_at", { ascending: true });
 
   const [hrSenderStatus, team] = await Promise.all([getHrSenderStatus(), getTeam()]);

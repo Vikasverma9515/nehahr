@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Calendar, Check, Plus, Trash2, X } from "lucide-react";
-import { createInterviewer, deleteInterviewer, getConnectGoogleUrl } from "@/app/actions/interviewers";
+import { createInterviewer, deleteInterviewer, getConnectGoogleUrl, getConnectOutlookUrl } from "@/app/actions/interviewers";
 import { useRouter } from "next/navigation";
 import { PersonAvatar } from "@/app/components/person-avatar";
 
@@ -15,6 +15,8 @@ type Interviewer = {
   working_hours_end: number;
   is_active: boolean;
   google_connected_at: string | null;
+  ms_connected_at?: string | null;
+  calendar_provider?: string | null;
 };
 
 export function InterviewersSection({ interviewers }: { interviewers: Interviewer[] }) {
@@ -42,6 +44,10 @@ export function InterviewersSection({ interviewers }: { interviewers: Interviewe
       await deleteInterviewer(id);
       router.refresh();
     });
+  }
+
+  async function handleConnectOutlook(interviewerId: string) {
+    window.location.assign(await getConnectOutlookUrl(interviewerId));
   }
 
   async function handleConnectCalendar(interviewerId: string) {
@@ -153,7 +159,7 @@ export function InterviewersSection({ interviewers }: { interviewers: Interviewe
       ) : (
         <div className="space-y-2.5">
           {interviewers.map((i) => {
-            const isConnected = !!i.google_connected_at;
+            const isConnected = i.calendar_provider === "microsoft" ? !!i.ms_connected_at : !!i.google_connected_at;
             return (
               <div key={i.id} className="row-item flex items-center justify-between gap-3 rounded-xl px-4 py-3">
                 <PersonAvatar name={i.name} size={38} />
@@ -163,7 +169,7 @@ export function InterviewersSection({ interviewers }: { interviewers: Interviewe
                     {isConnected && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] font-medium text-dark-text-secondary">
                         <Check className="h-2.5 w-2.5" />
-                        Calendar connected
+                        {i.calendar_provider === "microsoft" ? "Outlook connected" : "Google Calendar connected"}
                       </span>
                     )}
                   </div>
@@ -178,7 +184,16 @@ export function InterviewersSection({ interviewers }: { interviewers: Interviewe
                       className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.05] px-3 py-1.5 text-[12px] font-medium text-accent hover:bg-white/[0.08]"
                     >
                       <Calendar className="h-3.5 w-3.5" />
-                      Connect Calendar
+                      Google Calendar
+                    </button>
+                  )}
+                  {!isConnected && (
+                    <button
+                      onClick={() => handleConnectOutlook(i.id)}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.05] px-3 py-1.5 text-[12px] font-medium text-accent hover:bg-white/[0.08]"
+                    >
+                      <Calendar className="h-3.5 w-3.5" />
+                      Outlook
                     </button>
                   )}
                   <button
