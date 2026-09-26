@@ -77,6 +77,8 @@ def build_tts(spec: str | None = None, language: str | None = None):
         return deepgram.TTS(model=settings.deepgram_tts_model, **_key(settings.deepgram_api_key))
     # Deepgram Aura has no Hindi voice, so Hindi calls use Cartesia (multilingual).
     kwargs = {"model": "sonic-3", "language": "hi" if hindi else "en", **_key(settings.cartesia_api_key)}
+    if hindi:
+        kwargs["word_timestamps"] = False   # Sonic only has word timings for en, de, es, fr
     if settings.cartesia_voice:
         kwargs["voice"] = settings.cartesia_voice
     return cartesia.TTS(**kwargs)
