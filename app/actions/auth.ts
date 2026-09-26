@@ -60,3 +60,21 @@ export async function logout() {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+/** Single sign-on with Google Workspace or Microsoft 365 (Supabase OAuth providers). */
+export async function signInWithProvider(provider: "google" | "azure") {
+  if (!isConfigured()) return { error: NOT_CONFIGURED };
+  const { headers } = await import("next/headers");
+  const h = await headers();
+  const origin = process.env.FRONTEND_URL || `${h.get("x-forwarded-proto") || "https"}://${h.get("host")}`;
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: `${origin}/auth/callback`,
+      scopes: provider === "azure" ? "email openid profile" : undefined,
+    },
+  });
+  if (error || !data.url) return { error: error?.message || "Single sign-on isn't enabled for this provider" };
+  redirect(data.url);
+}

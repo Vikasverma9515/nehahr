@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { login } from "@/app/actions/auth";
 import { LogoMark } from "@/app/components/logo";
+import { SsoButtons } from "@/app/components/sso-buttons";
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, null);
@@ -20,6 +21,7 @@ export default function LoginPage() {
         </div>
 
         <div className="card-glass rounded-2xl p-6">
+          <SsoButtons />
           <form action={action} className="space-y-5">
             {state?.error && (
               <div className="rounded-xl bg-danger-muted px-4 py-3 text-[13px] font-medium text-danger">{state.error}</div>
