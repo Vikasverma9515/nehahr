@@ -17,6 +17,7 @@ export default async function FeedbackPage({
     job_title?: string;
     interview_type?: string;
     scheduled_at?: string;
+    ai_draft?: { strengths: string; concerns: string; notes: string } | null;
   };
 
   try {
@@ -74,7 +75,7 @@ export default async function FeedbackPage({
           </p>
         )}
       </div>
-      <FeedbackForm token={token} candidateName={data.candidate_name || "Candidate"} />
+      <FeedbackForm token={token} candidateName={data.candidate_name || "Candidate"} draft={data.ai_draft || null} />
     </Shell>
   );
 }
