@@ -479,8 +479,28 @@ async def _check_pre_joining():
                     print(f"[SCHEDULER] Dropout check failed: {e}")
 
 
+async def _check_meet_bots():
+    """Send Neha into Google Meet interviews where she has a role, 2 minutes early."""
+    from app.services import meet_bot_service
+    from app.workers.queue import enqueue
+
+    if not meet_bot_service.is_configured():
+        return
+    now = datetime.now(timezone.utc)
+    res = db.get_supabase().table("interviews").select("id, bot_status").eq(
+        "status", "scheduled"
+    ).neq("neha_role", "none").gte(
+        "scheduled_at", (now - timedelta(minutes=10)).isoformat()
+    ).lte("scheduled_at", (now + timedelta(minutes=INTERVAL_SECONDS // 60 + 2)).isoformat()).execute()
+    for iv in res.data or []:
+        if iv.get("bot_status") in (None, "scheduled"):
+            # Run 2 minutes before the start; the dedupe key makes it once per interview.
+            enqueue("meet.launch", {"interview_id": iv["id"]}, dedupe_key=f"meet:{iv['id']}")
+
+
 async def run_checks():
     """One pass over every scheduled check."""
+    await _check_meet_bots()
     await _check_reminders()
     await _check_result_calls()
     await _check_overdue_feedback()

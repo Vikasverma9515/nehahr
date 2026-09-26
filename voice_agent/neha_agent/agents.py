@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Annotated, Literal
 
-from livekit.agents import Agent, RunContext, ToolError, function_tool, get_job_context
+from livekit.agents import Agent, RunContext, StopResponse, ToolError, function_tool, get_job_context, llm
 from pydantic import Field
 
 from . import prompts
@@ -283,6 +283,23 @@ class InboundAgent(NehaAgent):
         return "Passed to the team. Tell them a recruiter will get back within one working day."
 
 
+class MeetAgent(ScreeningAgent):
+    """Neha inside a Google Meet: lead, co-interviewer or silent note-taker."""
+
+    def __init__(self, ctx: dict) -> None:
+        super().__init__(ctx)
+        self.role = (ctx.get("call") or {}).get("neha_role", "lead")
+        self.last_speaker: str | None = None
+
+    async def on_user_turn_completed(self, turn_ctx: llm.ChatContext, new_message: llm.ChatMessage) -> None:
+        text = new_message.text_content or ""
+        if self.last_speaker:
+            # Meet captions tell us who spoke; the LLM needs that in a panel.
+            new_message.content = [f"[{self.last_speaker}] {text}"]
+        if self.role == "co_interviewer" and "neha" not in text.lower():
+            raise StopResponse()
+
+
 AGENTS: dict[str, type[NehaAgent]] = {
     "screening": ScreeningAgent,
     "interview": ScreeningAgent,
@@ -298,4 +315,6 @@ AGENTS: dict[str, type[NehaAgent]] = {
 
 def build_agent(ctx: dict) -> NehaAgent:
     call_type = (ctx.get("call") or {}).get("call_type", "screening")
+    if (ctx.get("call") or {}).get("channel") == "meet":
+        return MeetAgent(ctx)
     return AGENTS.get(call_type, ScreeningAgent)(ctx)

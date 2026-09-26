@@ -150,6 +150,12 @@ def _initiate_call(payload: dict):
     )
 
 
+@task("meet.launch")
+async def _meet_launch(payload: dict):
+    from app.services import meet_bot_service
+    return await meet_bot_service.launch_for_interview(payload["interview_id"])
+
+
 @task("scheduler.tick")
 async def _scheduler_tick(payload: dict):
     from app.workers.scheduler import run_checks

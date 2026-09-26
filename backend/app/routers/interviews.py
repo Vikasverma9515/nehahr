@@ -684,7 +684,10 @@ async def update_interview(interview_id: str, payload: dict):
     allowed_fields = {
         "status", "confirmed_slot", "scheduled_at", "meeting_link",
         "google_event_id", "result", "feedback", "feedback_status",
+        "neha_role",
     }
+    if "neha_role" in payload and payload["neha_role"] not in ("none", "notetaker", "co_interviewer", "lead"):
+        raise HTTPException(status_code=400, detail="Invalid neha_role")
     data = {k: v for k, v in payload.items() if k in allowed_fields}
     if not data:
         raise HTTPException(status_code=400, detail="No valid fields to update")
@@ -692,6 +695,23 @@ async def update_interview(interview_id: str, payload: dict):
     supabase = db.get_supabase()
     result = supabase.table("interviews").update(data).eq("id", interview_id).execute()
     return result.data[0] if result.data else {}
+
+
+@router.post("/{interview_id}/neha/join")
+async def send_neha_to_meet(interview_id: str):
+    """Send Neha into this interview's Google Meet now."""
+    from app.services import meet_bot_service
+    try:
+        return await meet_bot_service.launch_for_interview(interview_id)
+    except (ValueError, RuntimeError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/{interview_id}/neha/leave")
+async def recall_neha_from_meet(interview_id: str):
+    from app.services import meet_bot_service
+    await meet_bot_service.recall(interview_id)
+    return {"ok": True}
 
 
 # =====================================================================

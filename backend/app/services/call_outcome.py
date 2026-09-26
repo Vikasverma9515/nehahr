@@ -657,8 +657,24 @@ class CallOutcome:
                 print(f"[HANDLER] Result call: INCONCLUSIVE after retry — HR flagged")
 
     async def _finalize_ai_interview(self, extracted: dict, summary: str | None):
-        """Store the interview result on the ai_interviews row and flag HR."""
+        """Store the interview result on the ai_interviews row and flag HR.
+
+        Interviews Neha joined in Google Meet store their notes on the human
+        interview instead, for the interviewer to review before feedback.
+        """
         supabase = db.get_supabase()
+        call = db.get_call(self.call_id) or {}
+        if call.get("interview_id"):
+            supabase.table("interviews").update({
+                "ai_notes": {
+                    "summary": summary,
+                    "answers": (extracted or {}).get("role_specific_answers") or [],
+                    "highlights": (extracted or {}).get("highlights") or [],
+                    "call_id": self.call_id,
+                },
+                "bot_status": "left",
+            }).eq("id", call["interview_id"]).execute()
+            return
         answers = (extracted or {}).get("role_specific_answers") or []
         ratings = [a.get("rating") for a in answers if isinstance(a.get("rating"), (int, float))]
         score = round(sum(ratings) / len(ratings) * 20) if ratings else None

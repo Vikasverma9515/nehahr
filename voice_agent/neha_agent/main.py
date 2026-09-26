@@ -118,6 +118,9 @@ async def entrypoint(ctx: JobContext) -> None:
     else:
         call_ctx = await _load_context(backend, meta)
     call_ctx.setdefault("call", {}).setdefault("channel", channel)
+    if channel == "meet":
+        call_ctx["call"]["channel"] = "meet"
+        call_ctx["call"]["neha_role"] = meta.get("neha_role", "lead")
     call_type = call_ctx["call"].get("call_type", meta.get("call_type", "screening"))
     is_phone = channel == "phone"
 
@@ -256,6 +259,22 @@ async def entrypoint(ctx: JobContext) -> None:
         delete_room_on_close=is_phone,
     )
 
+    if channel == "meet":
+        # The Meet bot publishes the whole meeting's audio as one participant.
+        room_options.participant_identity = "meet-bridge"
+        if call_ctx["call"]["neha_role"] == "notetaker":
+            # Stays silent: no TTS output, the LLM only records notes via tools.
+            room_options.audio_output = False
+
+        def _on_caption(packet: rtc.DataPacket) -> None:
+            if packet.topic == "meet.captions":
+                try:
+                    agent.last_speaker = json.loads(packet.data.decode()).get("speaker") or None
+                except Exception:
+                    pass
+
+        ctx.room.on("data_received", _on_caption)
+
     if channel == "room" and (call_ctx.get("candidate") or {}).get("id"):
         # Always listen to the candidate, never to a recruiter who joins to watch.
         room_options.participant_identity = f"candidate-{call_ctx['candidate']['id']}"
@@ -268,8 +287,12 @@ async def entrypoint(ctx: JobContext) -> None:
         await _run_phone(ctx, session, agent, room_options, backend, state, meta, call_ctx)
     else:
         await session.start(agent=agent, room=ctx.room, room_options=room_options)
+        if channel == "meet":
+            await ctx.wait_for_participant(identity="meet-bridge")
+            await asyncio.sleep(2.0)   # let Meet finish admitting the bot
         await backend.set_status(call_id, "in_progress")
-        session.say(prompts.greeting(call_ctx), allow_interruptions=True)
+        if not (channel == "meet" and call_ctx["call"].get("neha_role") == "notetaker"):
+            session.say(prompts.greeting(call_ctx), allow_interruptions=True)
 
     _arm_call_timer(session, state)
 

@@ -92,3 +92,20 @@ services:
         sync: false
       - key: TAVUS_PAL_ID
         sync: false
+
+  # Google Meet bot (meet_bot/): one Chrome per live meeting.
+  - type: pserv
+    name: neha-meet-bot
+    runtime: docker
+    rootDir: meet_bot
+    dockerfilePath: ./Dockerfile
+    plan: standard
+    envVars:
+      - key: MEET_BOT_SECRET
+        sync: false
+      - key: BACKEND_API_URL
+        sync: false
+      - key: INTERNAL_API_KEY
+        sync: false
+      - key: MAX_BOTS
+        value: "2"

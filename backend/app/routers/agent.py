@@ -205,6 +205,36 @@ async def candidate_request(call_id: str, body: CandidateRequestBody):
     return {"ok": True}
 
 
+# ── Meet bot events ──────────────────────────────────────────────────────
+
+class BotEvent(BaseModel):
+    event: str        # launching | waiting_in_lobby | in_call | left | denied | failed
+    detail: str | None = None
+
+
+BOT_STATUS = {
+    "launching": "joining", "waiting_in_lobby": "joining", "in_call": "in_call",
+    "left": "left", "denied": "failed", "failed": "failed",
+}
+
+
+@internal.post("/calls/{call_id}/bot-event")
+async def bot_event(call_id: str, body: BotEvent):
+    call = db.get_call(call_id)
+    if not call:
+        raise HTTPException(status_code=404, detail="Call not found")
+    if call.get("interview_id") and body.event in BOT_STATUS:
+        db.get_supabase().table("interviews").update(
+            {"bot_status": BOT_STATUS[body.event]}
+        ).eq("id", call["interview_id"]).execute()
+    if body.event == "in_call":
+        db.update_call_status(call_id, "in_progress", started_at=datetime.now(timezone.utc).isoformat())
+    elif body.event in ("denied", "failed"):
+        db.update_call_status(call_id, "failed", end_reason=f"bot {body.event}: {body.detail or ''}".strip())
+        await livekit_service.end_room(call.get("room_name") or "")
+    return {"ok": True}
+
+
 class StatusUpdate(BaseModel):
     status: str
     answered_by: str | None = None

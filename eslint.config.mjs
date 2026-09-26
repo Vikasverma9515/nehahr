@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Separate services with their own tooling:
+    "meet_bot/**",
+    "voice_agent/**",
+    "backend/**",
   ]),
 ]);
 
