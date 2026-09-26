@@ -36,7 +36,7 @@ const adminItems = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar({ userName, userEmail }: { userName: string; userEmail?: string }) {
+export function Sidebar({ userName, userEmail, badges = {} }: { userName: string; userEmail?: string; badges?: Record<string, number> }) {
   const pathname = usePathname();
 
   const isActive = (href: string, exact?: boolean) => {
@@ -76,11 +76,13 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
             {workItems.map((item) => {
               const active = isActive(item.href, item.exact);
               const Icon = item.icon;
+              const key = item.href.split("/").pop() || "";
+              const badge = badges[key] || 0;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  data-ai={`nav-${item.href.split("/").pop()}`}
+                  data-ai={`nav-${key}`}
                   className={clsx(
                     "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-all",
                     active
@@ -88,7 +90,6 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
                       : "text-dark-text-secondary hover:bg-white/[0.03] hover:text-white"
                   )}
                 >
-                  {/* Active indicator bar */}
                   {active && (
                     <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-accent" />
                   )}
@@ -98,9 +99,14 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
                       active ? "text-accent" : "text-dark-text-muted group-hover:text-dark-text-secondary"
                     )}
                   />
-                  <span className={clsx("font-medium", active && "font-semibold")}>
+                  <span className={clsx("flex-1 font-medium", active && "font-semibold")}>
                     {item.label}
                   </span>
+                  {badge > 0 && !active && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-accent/20 px-1 text-[9px] font-bold text-accent">
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -116,11 +122,13 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
             {adminItems.map((item) => {
               const active = isActive(item.href);
               const Icon = item.icon;
+              const key = item.href.split("/").pop() || "";
+              const badge = badges[key] || 0;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  data-ai={`nav-${item.href.split("/").pop()}`}
+                  data-ai={`nav-${key}`}
                   className={clsx(
                     "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-all",
                     active
@@ -137,9 +145,14 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
                       active ? "text-accent" : "text-dark-text-muted group-hover:text-dark-text-secondary"
                     )}
                   />
-                  <span className={clsx("font-medium", active && "font-semibold")}>
+                  <span className={clsx("flex-1 font-medium", active && "font-semibold")}>
                     {item.label}
                   </span>
+                  {badge > 0 && !active && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-accent/20 px-1 text-[9px] font-bold text-accent">
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
