@@ -105,6 +105,51 @@ def _format_ctc(ctc) -> str:
     return str(ctc)
 
 
+def _lpa(ctc) -> float | None:
+    if isinstance(ctc, dict):
+        for key in ("max", "min", "fixed"):
+            if isinstance(ctc.get(key), (int, float)):
+                return float(ctc[key]) + (float(ctc.get("variable") or 0) if key == "fixed" else 0)
+    if isinstance(ctc, (int, float)):
+        return float(ctc)
+    return None
+
+
+def check_must_haves(candidate: dict, extracted: dict, must: dict) -> list[str]:
+    """Hard requirements HR set on the job. Returns the ones the candidate fails.
+
+    Only fails on facts we actually have: a missing answer is not a failure.
+    """
+    if not must:
+        return []
+    failures: list[str] = []
+    notice = extracted.get("notice_period_days")
+    if must.get("max_notice_days") is not None and isinstance(notice, (int, float)) and notice > must["max_notice_days"]:
+        failures.append(f"notice period {int(notice)} days > {must['max_notice_days']}")
+
+    years = candidate.get("experience_years")
+    if must.get("min_experience_years") is not None and isinstance(years, (int, float)) and years < must["min_experience_years"]:
+        failures.append(f"{years:g} years of experience < {must['min_experience_years']}")
+
+    expected = _lpa(extracted.get("expected_ctc"))
+    if must.get("max_expected_ctc_lpa") is not None and expected is not None and expected > must["max_expected_ctc_lpa"]:
+        failures.append(f"expects {expected:g} LPA > {must['max_expected_ctc_lpa']} LPA budget")
+
+    allowed = [c.lower() for c in must.get("locations") or []]
+    location = (extracted.get("current_location") or candidate.get("current_location") or "").lower()
+    if allowed and location and not any(c in location for c in allowed):
+        relocates = extracted.get("open_to_relocation")
+        if not (must.get("allow_relocation", True) and relocates is True):
+            failures.append(f"based in {location.title()}, not in {', '.join(must['locations'])}"
+                            + ("" if relocates else " and not relocating"))
+
+    models = must.get("work_models") or []
+    pref = extracted.get("work_model_preference")
+    if models and pref and pref not in models:
+        failures.append(f"wants {pref} work, role is {'/'.join(models)}")
+    return failures
+
+
 async def score_candidate(candidate: dict, extracted: dict) -> dict:
     """Score a candidate based on extracted screening call data and job requirements.
 
@@ -155,6 +200,17 @@ async def score_candidate(candidate: dict, extracted: dict) -> dict:
 - Required skills: {', '.join(required_skills) if required_skills else 'not specified'}
 """
 
+    config = job.get("screening_config") or {}
+    if config.get("questions") or config.get("knockouts"):
+        job_info += "\n## What this team is screening for\n"
+        for q in config.get("questions") or []:
+            text = q.get("text") if isinstance(q, dict) else str(q)
+            good = q.get("what_good_looks_like") if isinstance(q, dict) else None
+            job_info += f"- Question: {text}" + (f" (a good answer: {good})" if good else "") + "\n"
+        for k in config.get("knockouts") or []:
+            job_info += f"- Knock-out rule: {k}\n"
+        job_info += "Weigh these answers inside role_experience. A clearly failed knock-out rule means not qualified.\n"
+
     user_prompt = f"{job_info}\n{candidate_info}\n\nScore this candidate using the rubric. Return ONLY the JSON object."
 
     try:
@@ -200,9 +256,16 @@ async def score_candidate(candidate: dict, extracted: dict) -> dict:
     else:
         score = None
 
-    return {
+    result = {
         "score": score,
         "qualified": bool(parsed.get("qualified", False)),
         "breakdown": parsed.get("breakdown"),
         "reason": parsed.get("reason", ""),
     }
+    # HR's hard requirements always win over the model's judgement.
+    failures = check_must_haves(candidate, extracted, config.get("must_haves") or {})
+    if failures:
+        result["qualified"] = False
+        result["knockouts_failed"] = failures
+        result["reason"] = "Knock-out: " + "; ".join(failures)
+    return result

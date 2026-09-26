@@ -65,7 +65,8 @@ def _known(ctx: dict) -> str:
         text += "From their resume: " + "; ".join(bits) + ". Confirm briefly instead of asking from scratch.\n"
     if c.get("match_gaps"):
         text += "Gaps to probe gently: " + "; ".join(c["match_gaps"][:4]) + ".\n"
-    lang = c.get("preferred_language")
+    job_lang = (ctx.get("screening_config") or {}).get("language")
+    lang = c.get("preferred_language") or (job_lang if job_lang and job_lang != "auto" else None)
     if lang and lang != "en":
         text += f"They prefer to talk in {'Hinglish' if lang == 'hinglish' else lang}; open in that language.\n"
     return text
