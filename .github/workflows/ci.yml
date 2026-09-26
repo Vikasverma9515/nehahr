@@ -54,6 +54,26 @@ jobs:
       - name: Agent tests (scripted LLM, offline)
         run: pytest -q
 
+  meet-bot:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: meet_bot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start a LiveKit dev server
+        run: |
+          curl -sL https://github.com/livekit/livekit/releases/download/v1.9.1/livekit_1.9.1_linux_amd64.tar.gz | tar xz
+          ./livekit-server --dev --bind 0.0.0.0 &
+          sleep 3
+      - name: Bridge end-to-end test (Chromium + LiveKit)
+        run: LIVEKIT_URL=ws://127.0.0.1:7880 npm test
+
   migrations:
     runs-on: ubuntu-latest
     services:

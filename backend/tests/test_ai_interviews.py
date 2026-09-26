@@ -72,6 +72,7 @@ def test_ai_interview_score_is_average_rating(monkeypatch):
         def execute(self): return None
 
     monkeypatch.setattr(call_outcome.db, "get_supabase", lambda: type("S", (), {"table": lambda s, n: T(n)})())
+    monkeypatch.setattr(call_outcome.db, "get_call", lambda cid: {"id": cid})
 
     class O(call_outcome.CallOutcome):
         def _ended_naturally(self): return True
@@ -81,3 +82,26 @@ def test_ai_interview_score_is_average_rating(monkeypatch):
         {"role_specific_answers": [{"rating": 4}, {"rating": 5}, {"rating": 3}]}, "Solid answers"))
     ai = updates["ai_interviews"][0]
     assert ai["score"] == 80 and ai["status"] == "completed" and ai["summary"] == "Solid answers"
+
+
+def test_meet_interview_notes_go_on_the_human_interview(monkeypatch):
+    import asyncio
+    from app.services import call_outcome
+
+    updates = {}
+
+    class T:
+        def __init__(self, n): self.n = n
+        def update(self, data):
+            updates.setdefault(self.n, []).append(data)
+            return self
+        def eq(self, *a): return self
+        def execute(self): return None
+
+    monkeypatch.setattr(call_outcome.db, "get_supabase", lambda: type("S", (), {"table": lambda s, n: T(n)})())
+    monkeypatch.setattr(call_outcome.db, "get_call", lambda cid: {"id": cid, "interview_id": "iv-1"})
+    o = call_outcome.CallOutcome("call-2", "interview", "cand-1")
+    asyncio.run(o._finalize_ai_interview({"role_specific_answers": [{"rating": 4}]}, "Discussed Kafka"))
+    notes = updates["interviews"][0]["ai_notes"]
+    assert notes["summary"] == "Discussed Kafka" and notes["call_id"] == "call-2"
+    assert "ai_interviews" not in updates

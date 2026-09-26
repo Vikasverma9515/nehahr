@@ -1,5 +1,7 @@
 """Agent behaviour with a scripted LLM: tools record the right data."""
 
+import pytest
+
 from livekit.agents import AgentSession
 
 from neha_agent.agents import CallState, build_agent
@@ -159,3 +161,36 @@ def test_inbound_prompts_for_known_and_unknown_callers():
     unknown = {**known, "candidate": None}
     assert "don't recognise" in prompts.for_call(unknown)
     assert "Who am I speaking with" in prompts.greeting(unknown)
+
+
+async def test_meet_co_interviewer_only_speaks_when_addressed():
+    # on_user_turn_completed runs on spoken turns; call it directly.
+    from livekit.agents import StopResponse, llm as lk_llm
+
+    ctx = {**CTX, "call": {"call_type": "interview", "channel": "meet", "neha_role": "co_interviewer"}}
+    agent = build_agent(ctx)
+    with pytest.raises(StopResponse):
+        await agent.on_user_turn_completed(
+            lk_llm.ChatContext.empty(), lk_llm.ChatMessage(role="user", content=["Tell me about your last project."]))
+
+    agent.last_speaker = "Anil (interviewer)"
+    msg = lk_llm.ChatMessage(role="user", content=["Neha, any follow-up question?"])
+    await agent.on_user_turn_completed(lk_llm.ChatContext.empty(), msg)   # no StopResponse
+    assert msg.text_content == "[Anil (interviewer)] Neha, any follow-up question?"
+
+
+async def test_meet_lead_always_replies():
+    from livekit.agents import llm as lk_llm
+
+    ctx = {**CTX, "call": {"call_type": "interview", "channel": "meet", "neha_role": "lead"}}
+    agent = build_agent(ctx)
+    await agent.on_user_turn_completed(
+        lk_llm.ChatContext.empty(), lk_llm.ChatMessage(role="user", content=["I built a Kafka pipeline."]))
+
+
+def test_meet_prompts_by_role():
+    for role, needle in [("lead", "first-round video interview"), ("co_interviewer", 'addresses you as "Neha"'),
+                         ("notetaker", "Never speak")]:
+        ctx = {**CTX, "call": {"call_type": "interview", "channel": "meet", "neha_role": role}}
+        assert needle in prompts.for_call(ctx)
+        assert prompts.greeting(ctx)

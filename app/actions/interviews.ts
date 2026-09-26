@@ -137,3 +137,34 @@ export async function submitFeedback(interviewId: string, data: FeedbackData) {
   revalidatePath("/dashboard");
   return { success: true };
 }
+
+export type NehaRole = "none" | "notetaker" | "co_interviewer" | "lead";
+
+export async function setNehaRole(interviewId: string, role: NehaRole, candidateId: string) {
+  const res = await backendFetch(`/api/interviews/${interviewId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ neha_role: role }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    return { error: (e as { detail?: string }).detail || "Could not update" };
+  }
+  revalidatePath(`/dashboard/candidates/${candidateId}`);
+  return { success: true };
+}
+
+export async function sendNehaToMeet(interviewId: string, candidateId: string) {
+  const res = await backendFetch(`/api/interviews/${interviewId}/neha/join`, { method: "POST" });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    return { error: (e as { detail?: string }).detail || "Could not send Neha" };
+  }
+  revalidatePath(`/dashboard/candidates/${candidateId}`);
+  return { success: true };
+}
+
+export async function recallNehaFromMeet(interviewId: string, candidateId: string) {
+  await backendFetch(`/api/interviews/${interviewId}/neha/leave`, { method: "POST" }).catch(() => null);
+  revalidatePath(`/dashboard/candidates/${candidateId}`);
+  return { success: true };
+}

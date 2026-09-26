@@ -488,6 +488,10 @@ async def create_interview_event(
     # fully branded HR email from our own code path. The candidate gets a
     # professional email with a .ics attachment they can add to any calendar.
     attendees: list[dict] = []
+    # The Meet bot's Google account is invited so it can join without waiting
+    # in the lobby when Neha is part of the interview.
+    if settings.meet_bot_email:
+        attendees.append({"email": settings.meet_bot_email, "displayName": settings.meet_bot_name})
 
     event_body: dict = {
         "summary": f"Interview: {candidate_name} — {job_title}",

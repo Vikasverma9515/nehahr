@@ -205,6 +205,31 @@ Stay neutral: don't signal whether answers were good or bad.
     return _header(ctx, task)
 
 
+def meet(ctx: dict, role: str) -> str:
+    """Neha inside a human-led Google Meet interview."""
+    w = _who(ctx)
+    if role == "lead":
+        return video_interview(ctx) + (
+            "\nThis is a Google Meet call. Other people (the hiring team) may be present; lines may "
+            "start with the speaker's name in brackets. Direct your questions to the candidate.\n"
+        )
+    if role == "co_interviewer":
+        task = f"""You're in a Google Meet interview for {w['job']} with {w['full_name']} and the hiring team.
+A human interviewer leads. Stay quiet: you only speak when someone addresses you as "Neha".
+Lines may start with the speaker's name in brackets.
+When asked, you can: suggest one sharp follow-up question, summarise the candidate's answer
+so far, check which topics (skills: {w['skills']}) haven't been covered, or answer questions
+about the hiring process. One or two sentences, then go quiet again.
+After a substantial candidate answer, call `record_role_answer` silently (without speaking).
+"""
+        return _header(ctx, task)
+    task = f"""You're a silent note-taker in a Google Meet interview for {w['job']} with {w['full_name']}.
+Never speak. After each substantial answer from the candidate, call `record_role_answer`
+with a one-line summary and a 1 to 5 rating. Reply with nothing else.
+"""
+    return _header(ctx, task)
+
+
 STAGE_WORDS = {
     "new": "their application is in and Neha will call them for a short screening soon",
     "screening": "their screening call is in progress",
@@ -258,6 +283,8 @@ Close warmly and `end_call`.
 def for_call(ctx: dict) -> str:
     call_type = (ctx.get("call") or {}).get("call_type", "screening")
     channel = (ctx.get("call") or {}).get("channel", "phone")
+    if channel == "meet":
+        return meet(ctx, (ctx.get("call") or {}).get("neha_role", "lead"))
     if call_type == "screening" and channel == "room":
         return video_interview(ctx)
     builders = {
@@ -290,6 +317,13 @@ def greeting(ctx: dict) -> str:
         return f"Hi {w['name']}, this is Neha from the {w['company']} recruiting team, calling about your recent interview. Do you have a minute?"
     if call_type in ("pre_joining", "engagement"):
         return f"Hi {w['name']}! It's Neha from {w['company']}. Just checking in before you join us. How are you doing?"
+    if (ctx.get("call") or {}).get("channel") == "meet":
+        role = (ctx.get("call") or {}).get("neha_role", "lead")
+        if role == "lead":
+            return f"Hi {w['name']}, I'm Neha, an AI recruiter with {w['company']}. Thanks for joining. Can you hear me clearly?"
+        if role == "co_interviewer":
+            return f"Hi everyone, I'm Neha, {w['company']}'s AI recruiter. I'll take notes and chip in if you ask me."
+        return f"Hi everyone, I'm Neha, {w['company']}'s AI note-taker. I'll stay quiet and take notes for the hiring team."
     if (ctx.get("call") or {}).get("channel") == "room":
         return f"Hi {w['name']}, I'm Neha, an AI recruiter with {w['company']}. Thanks for joining. Can you hear me clearly?"
     return f"Hi, am I speaking with {w['name']}? This is Neha, an AI recruiter from {w['company']}, about the {w['job']} role you applied for."

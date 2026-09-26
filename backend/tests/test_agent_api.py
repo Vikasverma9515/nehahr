@@ -115,3 +115,28 @@ def test_candidate_request_rejects_unknown_kind(client, monkeypatch):
     monkeypatch.setattr(agent.db, "get_call", lambda cid: {"id": cid, "candidate_id": "c"})
     r = client.post("/api/agent/calls/c1/request", headers=HEADERS, json={"kind": "bribe"})
     assert r.status_code == 400
+
+
+def test_bot_event_updates_interview_and_fails_call(client, monkeypatch):
+    from app.routers import agent
+
+    monkeypatch.setattr(agent.db, "get_call", lambda cid: {"id": cid, "interview_id": "iv-1", "room_name": "meet-c1"})
+    statuses, rooms, updates = [], [], []
+    monkeypatch.setattr(agent.db, "update_call_status", lambda cid, st, **k: statuses.append(st))
+
+    async def end_room(room):
+        rooms.append(room)
+
+    monkeypatch.setattr(agent.livekit_service, "end_room", end_room)
+
+    class T:
+        def update(self, d):
+            updates.append(d)
+            return self
+        def eq(self, *a): return self
+        def execute(self): return None
+
+    monkeypatch.setattr(agent.db, "get_supabase", lambda: type("S", (), {"table": lambda s, n: T()})())
+    r = client.post("/api/agent/calls/c1/bot-event", headers=HEADERS, json={"event": "denied", "detail": "not admitted"})
+    assert r.status_code == 200
+    assert updates == [{"bot_status": "failed"}] and statuses == ["failed"] and rooms == ["meet-c1"]

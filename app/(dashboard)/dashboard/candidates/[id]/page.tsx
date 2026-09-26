@@ -34,6 +34,8 @@ import {
 import Link from "next/link";
 import { PersonAvatar } from "@/app/components/person-avatar";
 import { AiInterviewCard, type AiInterviewRow } from "@/app/components/ai-interview-card";
+import { NehaMeetControl } from "@/app/components/neha-meet-control";
+import type { NehaRole } from "@/app/actions/interviews";
 
 const SCORING_WEIGHTS: Record<string, number> = {
   location_fit: 10,
@@ -652,7 +654,12 @@ function JourneyTimeline({
       // If feedback was submitted, render it inline so HR can see it
       // without opening a modal — especially important before they decide
       // on the next round.
-      extraContent: feedbackDone && feedback ? <FeedbackCard feedback={feedback} /> : undefined,
+      extraContent: feedbackDone && feedback ? <FeedbackCard feedback={feedback} />
+        : iv.ai_notes?.summary ? (
+          <div className="mt-2 rounded-lg bg-white/[0.03] px-3 py-2 text-[11px] text-dark-text-secondary">
+            <span className="font-semibold text-dark-text">Neha&apos;s notes: </span>{iv.ai_notes.summary}
+          </div>
+        ) : undefined,
       // Only show action buttons for the ACTIVE interview (not cancelled ones)
       action: isActive ? (
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -668,6 +675,14 @@ function JourneyTimeline({
             <ReminderCallButton candidateId={candidateId} />
           )}
           {isScheduled && <CancelMeetingButton interviewId={iv.id} />}
+          {isScheduled && iv.meeting_link?.includes("meet.google.com") && (
+            <NehaMeetControl
+              interviewId={iv.id}
+              candidateId={candidateId}
+              role={(iv.neha_role || "none") as NehaRole}
+              botStatus={iv.bot_status || null}
+            />
+          )}
         </div>
       ) : undefined,
     });

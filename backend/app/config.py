@@ -43,6 +43,13 @@ class Settings(BaseSettings):
     # or "livekit" (the voice agent in voice_agent/).
     voice_runtime: str = "twilio"
 
+    # Meet bot service (meet_bot/). Optional.
+    meet_bot_url: str = ""          # e.g. http://meet-bot:8090
+    meet_bot_secret: str = ""
+    # Bot's Google account: added to interview events so it skips Meet's lobby.
+    meet_bot_email: str = ""
+    meet_bot_name: str = "Neha (AI recruiter)"
+
     # Room recordings (LiveKit Egress → S3-compatible storage). Optional.
     egress_s3_bucket: str = ""
     egress_s3_region: str = ""
