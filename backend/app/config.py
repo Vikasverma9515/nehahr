@@ -45,6 +45,16 @@ class Settings(BaseSettings):
     # Dev only: skip Twilio signature checks (e.g. behind a rewriting tunnel).
     skip_twilio_signature: bool = False
 
+    # Country used for phone numbers entered without a +country code.
+    default_phone_region: str = "IN"
+
+    # Error reporting (optional)
+    sentry_dsn: str = ""
+    log_level: str = "INFO"
+
+    # Run the background-task worker inside the web process.
+    run_queue_worker: bool = True
+
     model_config = {"env_file": "../.env", "extra": "ignore"}
 
 

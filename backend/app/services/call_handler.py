@@ -356,22 +356,14 @@ class CallHandler:
             print(f"[RETRY] {self.call_type}: already {recent_count} attempts in 30m — giving up")
             return False
 
-        # Schedule retry via asyncio delayed task
-        import asyncio
-
-        async def _retry():
-            await asyncio.sleep(delay_minutes * 60)
-            try:
-                from app.services.call_service import call_service
-                call_service.initiate_call(
-                    candidate_id=self.candidate_id,
-                    call_type=self.call_type,
-                )
-                print(f"[RETRY] {self.call_type}: retry call initiated for {self.candidate_id}")
-            except Exception as e:
-                print(f"[RETRY] {self.call_type}: retry failed — {e}")
-
-        asyncio.create_task(_retry())
+        # Durable retry: survives restarts and redeploys.
+        from app.workers.queue import enqueue
+        enqueue(
+            "call.initiate",
+            {"candidate_id": self.candidate_id, "call_type": self.call_type},
+            delay_seconds=delay_minutes * 60,
+            dedupe_key=f"retry:{self.call_id}",
+        )
         print(f"[RETRY] {self.call_type}: scheduling retry in {delay_minutes}m")
         return True
 
