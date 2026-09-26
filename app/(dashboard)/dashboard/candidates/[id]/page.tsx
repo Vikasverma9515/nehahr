@@ -38,6 +38,7 @@ import { NehaMeetControl } from "@/app/components/neha-meet-control";
 import { MessagesCard, type MessageRow } from "@/app/components/messages-card";
 import { PortalLinkButton } from "@/app/components/portal-link-button";
 import { OfferCard } from "@/app/components/offer-card";
+import { RescoreButton } from "@/app/components/rescore-button";
 import type { OfferRow } from "@/app/actions/offers";
 import type { NehaRole } from "@/app/actions/interviews";
 
@@ -414,8 +415,8 @@ export default async function CandidateDetailPage({
           {score != null && scoreBreakdown && (
             <Card>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-dark-text">
-                  Scorecard
+                <h2 className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.1em] text-dark-text">
+                  Scorecard <RescoreButton candidateId={candidate.id} />
                 </h2>
                 <span
                   className={`rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
