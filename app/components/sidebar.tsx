@@ -18,6 +18,7 @@ import {
 import { logout } from "@/app/actions/auth";
 import { LogoMark } from "@/app/components/logo";
 import { PersonAvatar } from "@/app/components/person-avatar";
+import { CommandTrigger } from "@/app/components/command-palette";
 
 // Grouped nav — like Linear/Lever: "Work" section + "Admin" section
 const workItems = [
@@ -58,6 +59,11 @@ export function Sidebar({ userName, userEmail }: { userName: string; userEmail?:
           <p className="mt-0.5 text-[10px] text-dark-text-muted">AI Recruiting Agent</p>
         </div>
       </Link>
+
+      {/* Search */}
+      <div className="px-3 pb-2">
+        <CommandTrigger />
+      </div>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-2">

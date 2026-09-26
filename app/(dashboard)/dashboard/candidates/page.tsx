@@ -1,10 +1,9 @@
 import { createClient } from "@/app/lib/supabase/server";
 import { PageHeader } from "@/app/components/ui/page-header";
-import { Badge } from "@/app/components/ui/badge";
 import { EmptyState } from "@/app/components/ui/empty-state";
-import { Users, MapPin, ChevronRight } from "lucide-react";
+import { Users } from "lucide-react";
 import Link from "next/link";
-import { PersonAvatar } from "@/app/components/person-avatar";
+import { BulkCandidateList } from "@/app/components/bulk-candidate-actions";
 
 type Candidate = {
   id: string;
@@ -258,11 +257,7 @@ export default async function CandidatesPage({
 
       {/* Candidate list */}
       {visible.length > 0 ? (
-        <div className="rounded-xl border border-white/[0.08] bg-white/[0.015] divide-y divide-white/[0.06]">
-          {visible.map((c) => (
-            <CandidateRow key={c.id} candidate={c} />
-          ))}
-        </div>
+        <BulkCandidateList candidates={visible as any} />
       ) : (
         <EmptyState
           icon={Users}
@@ -288,56 +283,5 @@ export default async function CandidatesPage({
         />
       )}
     </>
-  );
-}
-
-function CandidateRow({ candidate: c }: { candidate: Candidate }) {
-  const job = c.jobs as unknown as { title: string } | null;
-  const hint = getHint(c);
-
-  return (
-    <Link
-      href={`/dashboard/candidates/${c.id}`}
-      className="flex items-center gap-4 px-4 py-3 transition-all hover:bg-white/[0.03]"
-    >
-      {/* Score */}
-      {c.score != null ? (
-        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center">
-          <svg viewBox="0 0 36 36" className="absolute inset-0 h-full w-full -rotate-90">
-            <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2.5" />
-            <circle cx="18" cy="18" r="14" fill="none" stroke="#8b5cf6" strokeWidth="2.5" strokeLinecap="round"
-              strokeDasharray={`${(c.score / 100) * 88} 88`} />
-          </svg>
-          <span className="text-[10px] font-bold text-dark-text">{c.score}</span>
-        </div>
-      ) : (
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.06]">
-          <span className="text-[9px] text-dark-text-muted">—</span>
-        </div>
-      )}
-
-      <PersonAvatar name={c.name} size={36} className="hidden sm:block" />
-
-      {/* Info */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[13px] font-semibold text-dark-text">{c.name}</span>
-          {c.current_location && (
-            <span className="hidden items-center gap-0.5 text-[10px] text-dark-text-muted md:inline-flex">
-              <MapPin className="h-2.5 w-2.5" /> {c.current_location}
-            </span>
-          )}
-        </div>
-        <p className="mt-0.5 text-[11px] text-dark-text-muted">
-          {job?.title || "No role"}
-          {hint && <span className="text-dark-text-secondary"> · {hint}</span>}
-        </p>
-      </div>
-
-      {/* Badge */}
-      <Badge>{c.stage}</Badge>
-
-      <ChevronRight className="h-4 w-4 shrink-0 text-dark-text-muted/40" />
-    </Link>
   );
 }
