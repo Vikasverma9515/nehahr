@@ -122,3 +122,38 @@ async def generate_screening(job_id: str):
         "knockouts": draft.get("knockouts", [])[:5],
         "interview_questions": draft.get("interview_questions", [])[:8],
     }
+
+
+class DraftDescriptionRequest(BaseModel):
+    title: str
+    notes: str = ""
+    location: str | None = None
+    work_model: str | None = None
+    skills: list[str] | None = None
+    salary: str | None = None
+
+
+@router.post("/draft-description")
+async def draft_description(req: DraftDescriptionRequest):
+    """Write a job description from a title and a hiring manager's rough notes."""
+    from app.services.ai_conversation import call_claude
+
+    prompt = (
+        "Write a clear, inclusive job description in plain text (no markdown symbols), 250-400 words, "
+        "with short sections: About the role, What you'll do (4-6 lines starting with '- '), "
+        "What we're looking for (4-6 lines starting with '- '), Nice to have, and Practical details "
+        "(location, work model, salary if given). Avoid gendered language, jargon and inflated claims. "
+        "Don't invent benefits or company facts.\n\n"
+        f"Title: {req.title}\nLocation: {req.location or 'not given'}\nWork model: {req.work_model or 'not given'}\n"
+        f"Skills: {', '.join(req.skills or []) or 'not given'}\nSalary: {req.salary or 'not given'}\n"
+        f"Hiring manager's notes:\n{req.notes or '(none)'}"
+    )
+    text = await call_claude(
+        system="You write job descriptions for recruiters. Plain text only.",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=900,
+        use_sonnet=True,
+    )
+    if not text or text.startswith('{"response"'):
+        raise HTTPException(status_code=502, detail="Couldn't draft right now; try again")
+    return {"description": text.strip()}

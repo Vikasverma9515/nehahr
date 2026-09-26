@@ -1,6 +1,7 @@
 import { createClient } from "@/app/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/app/components/ui/page-header";
+import { JdField } from "@/app/components/jd-field";
 
 async function createJob(formData: FormData) {
   "use server";
@@ -92,7 +93,7 @@ export default async function NewJobPage() {
             </div>
           </div>
 
-          <div><label htmlFor="job_description" className={labelClass}>Job Description</label><textarea id="job_description" name="job_description" rows={4} placeholder="Describe the role..." className={inputClass} /></div>
+          <JdField labelClass={labelClass} inputClass={inputClass} />
           <div className="flex gap-3 pt-2">
             <button type="submit" className="btn-primary rounded-xl px-5 py-2.5 text-[13px] font-semibold text-white">Create Job</button>
             <a href="/dashboard/jobs" className="rounded-xl border border-white/[0.08] px-5 py-2.5 text-[13px] font-medium text-dark-text-secondary hover:bg-white/[0.04] transition-all">Cancel</a>
