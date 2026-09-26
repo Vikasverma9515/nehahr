@@ -89,3 +89,12 @@ export async function moveCandidateStage(candidateId: string, stage: string) {
   revalidatePath(`/dashboard/candidates/${candidateId}`);
   return { success: true };
 }
+
+export async function saveRecruiterNotes(candidateId: string, notes: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("candidates")
+    .update({ recruiter_notes: notes || null }).eq("id", candidateId);
+  if (error) return { error: error.message };
+  revalidatePath(`/dashboard/candidates/${candidateId}`);
+  return { success: true };
+}

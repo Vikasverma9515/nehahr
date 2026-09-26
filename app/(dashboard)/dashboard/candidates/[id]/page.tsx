@@ -41,6 +41,7 @@ import { OfferCard } from "@/app/components/offer-card";
 import { RescoreButton } from "@/app/components/rescore-button";
 import { DocumentsCard, type DocRow } from "@/app/components/documents-card";
 import { NoShowButton } from "@/app/components/no-show-button";
+import { RecruiterNotes } from "@/app/components/recruiter-notes";
 import type { OfferRow } from "@/app/actions/offers";
 import type { NehaRole } from "@/app/actions/interviews";
 
@@ -368,6 +369,11 @@ export default async function CandidateDetailPage({
                 </SidebarSection>
               )}
             </div>
+          </Card>
+
+          {/* Recruiter notes */}
+          <Card>
+            <RecruiterNotes candidateId={candidate.id} initial={(candidate as { recruiter_notes?: string | null }).recruiter_notes ?? null} />
           </Card>
 
           {/* Resume match (from bulk intake) */}
