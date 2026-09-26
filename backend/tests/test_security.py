@@ -100,3 +100,31 @@ def test_twilio_webhook_accepts_valid_signature(client, monkeypatch):
     )
     r = client.post("/api/webhooks/twilio/status", data=params, headers={"X-Twilio-Signature": sig})
     assert r.status_code == 200
+
+
+def test_org_scope_blocks_other_orgs_records(client, monkeypatch):
+    from app.services import tenancy
+    monkeypatch.setattr("app.security._lookup_org_id", lambda uid: "org-a")
+    monkeypatch.setattr(tenancy, "_row_org", lambda table, rid: (True, "org-b"))
+    r = client.get("/api/candidates/cand-1", headers={"Authorization": f"Bearer {_token()}"})
+    assert r.status_code == 404
+    r = client.post("/api/calls/initiate", json={"candidate_id": "cand-1"},
+                    headers={"Authorization": f"Bearer {_token()}"})
+    assert r.status_code == 404
+
+
+def test_org_scope_allows_own_records(client, monkeypatch):
+    from app.services import tenancy
+    import app.routers.candidates as cand_router
+    monkeypatch.setattr("app.security._lookup_org_id", lambda uid: "org-a")
+    monkeypatch.setattr(tenancy, "_row_org", lambda table, rid: (True, "org-a"))
+
+    class Q:
+        def __getattr__(self, name):
+            return lambda *a, **k: self
+        def execute(self):
+            return type("R", (), {"data": {"id": "cand-1", "org_id": "org-a"}})()
+
+    monkeypatch.setattr(cand_router, "get_supabase", lambda: type("S", (), {"table": lambda self, t: Q()})())
+    r = client.get("/api/candidates/cand-1", headers={"Authorization": f"Bearer {_token()}"})
+    assert r.status_code == 200 and r.json()["id"] == "cand-1"

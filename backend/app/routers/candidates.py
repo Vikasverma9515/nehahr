@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.dependencies import get_supabase
+from app.services.tenancy import scope, stamp
 
 router = APIRouter()
 
@@ -30,9 +31,9 @@ async def list_candidates(
 ):
     """List candidates with filters."""
     supabase = get_supabase()
-    query = supabase.table("candidates").select(
+    query = scope(supabase.table("candidates").select(
         "id, name, email, phone, stage, score, qualification_status, created_at, jobs(title)"
-    ).order("created_at", desc=True).limit(limit)
+    )).order("created_at", desc=True).limit(limit)
 
     if stage:
         query = query.eq("stage", stage)
@@ -67,7 +68,7 @@ async def create_candidate(req: CreateCandidateRequest):
     if req.job_id:
         data["job_id"] = req.job_id
 
-    result = supabase.table("candidates").insert(data).execute()
+    result = supabase.table("candidates").insert(stamp(data)).execute()
     return result.data[0] if result.data else {}
 
 
