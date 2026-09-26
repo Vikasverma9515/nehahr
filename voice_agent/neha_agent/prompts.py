@@ -205,6 +205,56 @@ Stay neutral: don't signal whether answers were good or bad.
     return _header(ctx, task)
 
 
+STAGE_WORDS = {
+    "new": "their application is in and Neha will call them for a short screening soon",
+    "screening": "their screening call is in progress",
+    "screened": "their screening is done and the team is reviewing it",
+    "shortlisted": "they've been shortlisted and interview scheduling is next",
+    "scheduling": "the team is finding an interview time",
+    "scheduled": "their interview is booked",
+    "interviewing": "they're in the interview rounds",
+    "offer": "they're at the offer stage; HR will share details",
+    "joined": "they've joined",
+    "rejected": "the team decided not to move forward this time",
+    "withdrawn": "their application was withdrawn",
+}
+
+
+def inbound(ctx: dict) -> str:
+    company = (ctx.get("company") or {}).get("name") or "our company"
+    status = ctx.get("context") or {}
+    if not ctx.get("candidate"):
+        task = f"""Someone called {company}'s recruiting line and we don't recognise their number.
+Find out who they are and why they're calling. If they're a candidate, get their full name,
+the role they applied for and an email, then call `take_message` with kind "message" and
+those details. If they want to apply, tell them to use the careers page and take a message.
+Close politely and `end_call`.
+"""
+        return _header({**ctx, "candidate": {"name": "the caller"}}, task)
+
+    stage = status.get("stage") or "new"
+    nxt = status.get("next_interview") or {}
+    interview = (
+        f"Their next interview: {nxt.get('interview_type', 'video')} on {nxt.get('scheduled_at')} "
+        f"(say it in their local time, India unless they say otherwise); the joining link is in their email."
+        if nxt else "No interview is booked right now."
+    )
+    task = f"""The candidate called us. Help with whatever they need, briefly.
+What we know: {STAGE_WORDS.get(stage, 'their application is being processed')}.
+{interview}
+{('Joining date: ' + str(status['joining_date']) + '.') if status.get('joining_date') else ''}
+
+- Status questions: answer from what we know above, in general terms. Never share scores,
+  feedback or other candidates.
+- Reschedule: ask for times that work, call `take_message` with kind "reschedule" and the
+  times; say a recruiter will confirm a new slot.
+- Withdrawing: ask the reason once, call `take_message` with kind "withdraw".
+- Anything you can't answer: call `take_message` with kind "question".
+Close warmly and `end_call`.
+"""
+    return _header(ctx, task)
+
+
 def for_call(ctx: dict) -> str:
     call_type = (ctx.get("call") or {}).get("call_type", "screening")
     channel = (ctx.get("call") or {}).get("channel", "phone")
@@ -219,6 +269,7 @@ def for_call(ctx: dict) -> str:
         "pre_joining": pre_joining,
         "engagement": lambda c: pre_joining(c, engagement=True),
         "interview": video_interview,
+        "inbound": inbound,
     }
     return builders.get(call_type, screening)(ctx)
 
@@ -231,6 +282,10 @@ def greeting(ctx: dict) -> str:
         return f"Hi {w['name']}, this is Neha from the {w['company']} recruiting team. Quick reminder about your interview today. Is now a good moment?"
     if call_type == "scheduling":
         return f"Hi, is this {w['name']}? This is Neha from the {w['company']} recruiting team, with some good news about your application."
+    if call_type == "inbound":
+        if not ctx.get("candidate"):
+            return f"Hi, you've reached the {w['company']} recruiting team. This is Neha, an AI assistant. Who am I speaking with?"
+        return f"Hi {w['name']}, this is Neha from the {w['company']} recruiting team. How can I help?"
     if call_type == "result":
         return f"Hi {w['name']}, this is Neha from the {w['company']} recruiting team, calling about your recent interview. Do you have a minute?"
     if call_type in ("pre_joining", "engagement"):

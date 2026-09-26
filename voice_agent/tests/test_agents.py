@@ -123,3 +123,39 @@ async def test_end_call_marks_natural_end_and_shuts_down():
             await session.run(user_input="No more questions, thanks!")
     assert state.ended_naturally and state.end_reason == "completed"
     assert shutdown_reasons == ["end_call:completed"]
+
+
+async def test_inbound_take_message_calls_backend(monkeypatch):
+    import neha_agent.backend as backend_mod
+
+    sent = []
+
+    class FakeBackend:
+        async def candidate_request(self, call_id, kind, details):
+            sent.append((call_id, kind, details))
+
+        async def aclose(self):
+            pass
+
+    monkeypatch.setattr(backend_mod, "BackendClient", FakeBackend)
+    ctx = {**CTX, "call": {"call_type": "inbound", "channel": "phone"},
+           "context": {"stage": "scheduled", "next_interview": {"scheduled_at": "2026-10-01T10:00:00+05:30"}}}
+    llm = ScriptedLLM([
+        Turn(tool_calls=[("take_message", {"kind": "reschedule", "details": "Prefers Friday afternoon"})]),
+        Turn(text="Done, a recruiter will confirm a new time."),
+    ])
+    session, state = _session(llm, ctx)
+    async with session:
+        await session.start(build_agent(ctx))
+        await session.run(user_input="Can I move my interview to Friday afternoon?")
+    assert sent == [("t1", "reschedule", "Prefers Friday afternoon")]
+    assert state.extracted["requests"][0]["kind"] == "reschedule"
+
+
+def test_inbound_prompts_for_known_and_unknown_callers():
+    known = {**CTX, "call": {"call_type": "inbound", "channel": "phone"}, "context": {"stage": "shortlisted"}}
+    assert "shortlisted" in prompts.for_call(known)
+    assert prompts.greeting(known).startswith("Hi Priya")
+    unknown = {**known, "candidate": None}
+    assert "don't recognise" in prompts.for_call(unknown)
+    assert "Who am I speaking with" in prompts.greeting(unknown)

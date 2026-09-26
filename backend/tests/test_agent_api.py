@@ -83,3 +83,35 @@ def test_playground_needs_livekit(client, monkeypatch):
     monkeypatch.setattr(livekit_service, "is_configured", lambda: False)
     r = client.post("/api/agent/playground/session", json={"candidate_id": "cand-1"})
     assert r.status_code == 503
+
+
+def test_inbound_creates_call_and_returns_status(client, monkeypatch):
+    from app.routers import agent
+
+    monkeypatch.setattr(agent, "_find_candidate_by_phone", lambda n: {"id": "cand-1", "org_id": "org-1"})
+    inserted = {}
+
+    class T:
+        def __init__(self, name): self.name = name
+        def insert(self, row):
+            inserted[self.name] = row
+            return self
+        def execute(self):
+            return type("R", (), {"data": [{"id": "call-9", **inserted.get(self.name, {})}]})()
+
+    monkeypatch.setattr(agent.db, "get_supabase", lambda: type("S", (), {"table": lambda self, n: T(n)})())
+    monkeypatch.setattr(agent, "_build_context", lambda call: {"call": {"id": call["id"], "call_type": "inbound"},
+                                                                 "context": {"stage": "scheduled"}})
+    r = client.post("/api/agent/inbound", headers=HEADERS, json={"from_number": "+919876543210"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["call_id"] == "call-9" and body["known_caller"] is True
+    row = inserted["calls"]
+    assert row["direction"] == "inbound" and row["org_id"] == "org-1" and row["call_type"] == "inbound"
+
+
+def test_candidate_request_rejects_unknown_kind(client, monkeypatch):
+    from app.routers import agent
+    monkeypatch.setattr(agent.db, "get_call", lambda cid: {"id": cid, "candidate_id": "c"})
+    r = client.post("/api/agent/calls/c1/request", headers=HEADERS, json={"kind": "bribe"})
+    assert r.status_code == 400

@@ -40,6 +40,19 @@ class BackendClient:
         r.raise_for_status()
         return r.json()
 
+    async def inbound(self, from_number: str, to_number: str | None, room_name: str) -> dict:
+        r = await self._client.post("/api/agent/inbound", json={
+            "from_number": from_number, "to_number": to_number, "room_name": room_name,
+        })
+        r.raise_for_status()
+        return r.json()
+
+    async def candidate_request(self, call_id: str, kind: str, details: str) -> None:
+        r = await self._client.post(
+            f"/api/agent/calls/{call_id}/request", json={"kind": kind, "details": details}
+        )
+        r.raise_for_status()
+
     async def complete(self, call_id: str, report: dict) -> None:
         r = await self._client.post(f"/api/agent/calls/{call_id}/complete", json=report)
         r.raise_for_status()
