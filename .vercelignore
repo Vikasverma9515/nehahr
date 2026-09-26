@@ -1,0 +1,6 @@
+# Deployed elsewhere (Render / LiveKit); not part of the dashboard build.
+backend/
+voice_agent/
+meet_bot/
+supabase/
+docs/
