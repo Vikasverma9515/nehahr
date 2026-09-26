@@ -3,6 +3,8 @@ import { Card } from "@/app/components/ui/card";
 import { InterviewersSection } from "@/app/components/interviewers-section";
 import { HrSenderSection } from "@/app/components/hr-sender-section";
 import { getHrSenderStatus } from "@/app/actions/hr-sender";
+import { getTeam } from "@/app/actions/team";
+import { TeamSection } from "@/app/components/team-section";
 import { PersonAvatar } from "@/app/components/person-avatar";
 import {
   Users,
@@ -30,7 +32,7 @@ export default async function SettingsPage({
     .select("id, name, email, timezone, working_hours_start, working_hours_end, is_active, google_connected_at")
     .order("created_at", { ascending: true });
 
-  const hrSenderStatus = await getHrSenderStatus();
+  const [hrSenderStatus, team] = await Promise.all([getHrSenderStatus(), getTeam()]);
 
   const userName = profile?.full_name || user?.email?.split("@")[0] || "User";
   const userEmail = profile?.email || user?.email || "";
@@ -83,6 +85,13 @@ export default async function SettingsPage({
                 <ProfileField label="Email" value={userEmail} />
                 <ProfileField label="Role" value={profile?.role || "HR Admin"} capitalize />
               </div>
+            </Card>
+          </section>
+
+          {/* Team */}
+          <section id="team" className="scroll-mt-4">
+            <Card>
+              <TeamSection org={team.org} members={team.members} invites={team.invites} />
             </Card>
           </section>
 

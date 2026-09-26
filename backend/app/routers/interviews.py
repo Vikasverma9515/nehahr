@@ -15,6 +15,7 @@ from app.config import settings
 from app.services import db
 from app.services import calendar_service
 from app.services.call_service import call_service
+from app.services.tenancy import scope
 
 # ── Email templates ────────────────────────────────────────────────────
 
@@ -85,8 +86,8 @@ async def list_interviews(status: str | None = None, limit: int = 50):
     """List interviews, optionally filtered by status."""
     supabase = db.get_supabase()
     query = (
-        supabase.table("interviews")
-        .select("*, candidates(name, phone, email), jobs(title), interviewers(name, email)")
+        scope(supabase.table("interviews")
+        .select("*, candidates(name, phone, email), jobs(title), interviewers(name, email)"))
         .order("scheduled_at", desc=False)
         .limit(limit)
     )

@@ -9,6 +9,7 @@ from app.config import settings
 from app.services.call_service import call_service
 from app.services import db
 from app.security import require_signed_link
+from app.services.tenancy import scope
 
 router = APIRouter()
 # Opened directly by the browser's <audio> tag, so it uses a signed link.
@@ -49,9 +50,9 @@ async def list_calls(
 ):
     """List calls with optional filters."""
     supabase = db.get_supabase()
-    query = supabase.table("calls").select(
+    query = scope(supabase.table("calls").select(
         "*, candidates(name)"
-    ).order("created_at", desc=True).limit(limit)
+    )).order("created_at", desc=True).limit(limit)
 
     if call_type:
         query = query.eq("call_type", call_type)

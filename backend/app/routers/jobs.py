@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.dependencies import get_supabase
+from app.services.tenancy import scope, stamp
 
 router = APIRouter()
 
@@ -24,7 +25,7 @@ class CreateJobRequest(BaseModel):
 async def list_jobs(status: str | None = None):
     """List all jobs."""
     supabase = get_supabase()
-    query = supabase.table("jobs").select("*").order("created_at", desc=True)
+    query = scope(supabase.table("jobs").select("*")).order("created_at", desc=True)
     if status:
         query = query.eq("status", status)
     result = query.execute()
@@ -46,7 +47,7 @@ async def create_job(req: CreateJobRequest):
     """Create a new job."""
     supabase = get_supabase()
     result = supabase.table("jobs").insert(
-        req.model_dump(exclude_none=True)
+        stamp(req.model_dump(exclude_none=True))
     ).execute()
     return result.data[0] if result.data else {}
 

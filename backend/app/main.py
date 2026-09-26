@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.security import require_user
+from app.services.tenancy import enforce_org_scope
 from app.routers import candidates, calls, jobs, webhooks, interviewers, auth, interviews, hr_sender
 
 
@@ -36,7 +36,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-authed = [Depends(require_user)]
+# Signed in + every referenced record belongs to the caller's organization.
+authed = [Depends(enforce_org_scope)]
 
 app.include_router(candidates.router, prefix="/api/candidates", tags=["candidates"], dependencies=authed)
 app.include_router(calls.public_router, prefix="/api/calls", tags=["calls"])

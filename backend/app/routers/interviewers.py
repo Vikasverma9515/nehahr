@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.services import db
+from app.services.tenancy import scope, stamp
 
 router = APIRouter()
 
@@ -29,7 +30,7 @@ class UpdateInterviewerRequest(BaseModel):
 async def list_interviewers():
     """List all interviewers."""
     supabase = db.get_supabase()
-    result = supabase.table("interviewers").select("*").order("created_at", desc=False).execute()
+    result = scope(supabase.table("interviewers").select("*")).order("created_at", desc=False).execute()
     # Don't leak tokens to the frontend
     for row in result.data or []:
         row.pop("google_refresh_token", None)
@@ -42,7 +43,7 @@ async def create_interviewer(req: CreateInterviewerRequest):
     """Add a new interviewer."""
     supabase = db.get_supabase()
     try:
-        result = supabase.table("interviewers").insert(req.model_dump()).execute()
+        result = supabase.table("interviewers").insert(stamp(req.model_dump())).execute()
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
